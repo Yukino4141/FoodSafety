@@ -1,0 +1,53 @@
+server:
+  port: 8080
+
+spring:
+  profiles:
+    active: dev
+  main:
+    allow-circular-references: true
+  datasource:
+    druid:
+      driver-class-name: ${food-safety.datasource.driver-class-name}
+      url: jdbc:mysql://${food-safety.datasource.host}:${food-safety.datasource.port}/${food-safety.datasource.database}?serverTimezone=Asia/Shanghai&useUnicode=true&characterEncoding=utf-8&zeroDateTimeBehavior=convertToNull&useSSL=false&allowPublicKeyRetrieval=true
+      username: ${food-safety.datasource.username}
+      password: ${food-safety.datasource.password}
+  redis:
+    host: ${food-safety.redis.host}
+    port: ${food-safety.redis.port}
+
+
+mybatis:
+  #mapper配置文件
+  mapper-locations: classpath:mapper/*.xml
+  type-aliases-package: com.sky.entity
+  configuration:
+    #开启驼峰命名
+    map-underscore-to-camel-case: true
+
+logging:
+  level:
+    com:
+      sky:
+        mapper: debug
+        service: info
+        controller: info
+
+sky:
+  jwt:
+    # 设置jwt签名加密时使用的秘钥
+    admin-secret-key: itcast
+    # 设置jwt过期时间
+    admin-ttl: 7200000
+    # 设置前端传递过来的令牌名称
+    admin-token-name: token
+    user-secret-key: itheima
+    user-ttl: 720000000000
+    user-token-name: authentication
+  alioss:
+    endpoint: ${food-safety.alioss.endpoint}
+    access-key-id: ${food-safety.alioss.access-key-id}
+    access-key-secret: ${food-safety.alioss.access-key-secret}
+    bucket-name: ${food-safety.alioss.bucket-name}
+
+
