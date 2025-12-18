@@ -53,3 +53,4 @@ public class WebMvcConfiguration extends WebMvcConfigurationSupport {
         registry.addResourceHandler("/admin/**").addResourceLocations("classpath:/static/admin/");
     }
 }
+
