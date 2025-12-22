@@ -20,7 +20,7 @@ spring:
 mybatis:
   #mapper配置文件
   mapper-locations: classpath:mapper/*.xml
-  type-aliases-package: com.sky.entity
+  type-aliases-package: com.itheima.pojo.entity
   configuration:
     #开启驼峰命名
     map-underscore-to-camel-case: true
@@ -28,12 +28,12 @@ mybatis:
 logging:
   level:
     com:
-      sky:
+      itheima:
         mapper: debug
         service: info
         controller: info
 
-sky:
+food-safety:
   jwt:
     # 设置jwt签名加密时使用的秘钥
     admin-secret-key: itcast
@@ -49,5 +49,8 @@ sky:
     access-key-id: ${food-safety.alioss.access-key-id}
     access-key-secret: ${food-safety.alioss.access-key-secret}
     bucket-name: ${food-safety.alioss.bucket-name}
+  wechat:
+    appid: ${food-safety.wechat.appid}
+    secret: ${food-safety.wechat.secret}
 
 
