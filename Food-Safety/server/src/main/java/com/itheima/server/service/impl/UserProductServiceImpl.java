@@ -90,11 +90,12 @@ public class UserProductServiceImpl implements UserProductService {
         BeanUtils.copyProperties(product, productVO);
 
         // 1. 将配料字符串转为列表
-        String jsonIngredients = product.getJsonIngredients();
-        if (jsonIngredients != null && !jsonIngredients.isEmpty()) {
-            List<String> ingredientList = Arrays.asList(jsonIngredients.split(","));
-            productVO.setIngredientList(ingredientList);
-        }
+         String jsonIngredients = product.getJsonIngredients();
+//         if (jsonIngredients != null && !jsonIngredients.isEmpty()) {
+//             List<String> ingredientList = Arrays.asList(jsonIngredients.split(","));
+//             productVO.setIngredientList(ingredientList);
+//         }
+        productVO.setIngredientList(jsonIngredients);
 
         // 2. 根据风险等级设置安全状态
         Integer riskLevel = product.getRiskLevel();

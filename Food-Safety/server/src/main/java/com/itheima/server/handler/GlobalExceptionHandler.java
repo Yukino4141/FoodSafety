@@ -34,6 +34,6 @@ public class GlobalExceptionHandler {
     public Result exceptionHandler(Exception ex) {
         log.error("系统异常信息：{}", ex.getMessage());
         ex.printStackTrace();
-        return Result.error("系统繁忙，请稍后重试");
+        return Result.error(ex.getMessage());
     }
 }
