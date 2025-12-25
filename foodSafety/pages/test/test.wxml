@@ -1,0 +1,63 @@
+<!-- pages/test/test.wxml -->
+<view class="container">
+  <view class="header">
+    <text class="title">测试页面</text>
+    <text class="subtitle">快速访问详情页</text>
+  </view>
+  
+  <view class="test-list">
+    <view class="test-item" data-id="1" bindtap="goToDetail">
+      <view class="test-icon">🍪</view>
+      <view class="test-info">
+        <text class="test-name">风险食品 - 夹心饼干</text>
+        <text class="test-desc">含代可可脂、反式脂肪酸</text>
+      </view>
+      <icon type="right" size="20" color="#ccc" />
+    </view>
+    
+    <view class="test-item" data-id="2" bindtap="goToDetail">
+      <view class="test-icon">🍞</view>
+      <view class="test-info">
+        <text class="test-name">安全食品 - 全麦面包</text>
+        <text class="test-desc">成分简单，无添加剂</text>
+      </view>
+      <icon type="right" size="20" color="#ccc" />
+    </view>
+    
+    <view class="test-item" data-id="3" bindtap="goToDetail">
+      <view class="test-icon">🍟</view>
+      <view class="test-info">
+        <text class="test-name">高钠食品 - 薯片</text>
+        <text class="test-desc">钠含量超标，有风险</text>
+      </view>
+      <icon type="right" size="20" color="#ccc" />
+    </view>
+    
+    <view class="test-item" data-id="4" bindtap="goToDetail">
+      <view class="test-icon">🥛</view>
+      <view class="test-info">
+        <text class="test-name">健康食品 - 纯牛奶</text>
+        <text class="test-desc">营养均衡，推荐食用</text>
+      </view>
+      <icon type="right" size="20" color="#ccc" />
+    </view>
+  </view>
+  
+  <view class="section">
+    <text class="section-title">扫码测试</text>
+    <button class="scan-btn" bindtap="simulateScan">
+      <icon type="scan" size="20" />
+      模拟扫码
+    </button>
+  </view>
+  
+  <view class="section">
+    <text class="section-title">直接访问</text>
+    <input 
+      class="barcode-input" 
+      placeholder="输入条形码（如：692000001）"
+      bindinput="onBarcodeInput"
+    />
+    <button class="go-btn" bindtap="goByBarcode">前往详情</button>
+  </view>
+</view>

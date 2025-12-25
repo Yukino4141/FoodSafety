@@ -1,0 +1,7 @@
+{
+  "navigationBarTitleText": "搜索商品",
+  "enablePullDownRefresh": true,
+  "backgroundTextStyle": "dark",
+  "backgroundColor": "#f8f9fa",
+  "onReachBottomDistance": 50
+}
