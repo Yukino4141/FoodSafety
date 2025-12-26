@@ -1,11 +1,11 @@
 {
   "pages": [
-    "pages/login/login",
     "pages/index/index",
     "pages/detail/detail",
     "pages/search/search",
     "pages/history/history",
-    "pages/profile/profile"
+    "pages/profile/profile",
+    "pages/login/login"
   ],
   "window": {
     "navigationBarTitleText": "食安卫士",
