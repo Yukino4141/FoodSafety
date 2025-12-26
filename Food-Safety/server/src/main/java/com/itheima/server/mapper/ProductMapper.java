@@ -12,41 +12,11 @@ import java.util.List;
  */
 @Mapper
 public interface ProductMapper {
-
-    /**
-     * 根据条形码查询商品（用户端扫码）
-     * @param barcode 条形码
-     * @return 商品实体
-     */
-    @Select("SELECT * FROM product WHERE barcode = #{barcode}")
-    Product getByBarcode(String barcode);
-
-    /**
-     * 根据商品名称模糊搜索（用户端关键词搜索）
-     * @param name 商品名称关键词
-     * @return 商品列表
-     */
-    List<Product> listByName(String name);
-
-    /**
-     * 根据 ID 查询商品
-     * @param id 商品ID
-     * @return 商品实体
-     */
-    @Select("SELECT * FROM product WHERE id = #{id}")
-    Product getById(Long id);
-
     /**
      * 插入商品（管理端新增商品）
      * @param product 商品实体
      */
     void insert(Product product);
-
-    /**
-     * 更新商品信息（管理端修改商品）
-     * @param product 商品实体
-     */
-    void update(Product product);
 
     /**
      * 根据 ID 删除商品（管理端删除商品）
@@ -59,6 +29,35 @@ public interface ProductMapper {
      * @param ids 商品ID列表
      */
     void deleteByIds(List<Long> ids);
+
+    /**
+     * 更新商品信息（管理端修改商品）
+     * @param product 商品实体
+     */
+    void update(Product product);
+
+    /**
+     * 根据条形码查询商品（用户端扫码）
+     * @param barcode 条形码
+     * @return 商品实体
+     */
+    @Select("SELECT * FROM product WHERE barcode = #{barcode}")
+    Product getByBarcode(String barcode);
+
+    /**
+     * 根据 ID 查询商品
+     * @param id 商品ID
+     * @return 商品实体
+     */
+    @Select("SELECT * FROM product WHERE id = #{id}")
+    Product getById(Long id);
+
+    /**
+     * 根据商品名称模糊搜索（用户端关键词搜索）
+     * @param name 商品名称关键词
+     * @return 商品列表
+     */
+    List<Product> listByName(String name);
 
     /**
      * 分页查询商品（管理端商品列表）

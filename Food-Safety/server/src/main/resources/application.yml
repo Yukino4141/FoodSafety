@@ -53,4 +53,10 @@ food-safety:
     appid: ${food-safety.wechat.appid}
     secret: ${food-safety.wechat.secret}
 
-
+# PageHelper配置
+pagehelper:
+  helper-dialect: mysql
+  reasonable: true
+  support-methods-arguments: true
+  params: count=countSql
+  auto-runtime-dialect: true

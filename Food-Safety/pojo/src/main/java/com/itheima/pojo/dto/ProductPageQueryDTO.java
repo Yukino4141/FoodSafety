@@ -5,8 +5,8 @@ import java.io.Serializable;
 
 @Data
 public class ProductPageQueryDTO implements Serializable {
-    private int page;
-    private int pageSize;
+    private Integer page = 1;
+    private Integer pageSize = 10;
     private String name;    // 商品名称模糊查询
     private String barcode; // 条码精确查询
 }

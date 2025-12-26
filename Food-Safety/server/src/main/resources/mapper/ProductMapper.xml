@@ -5,7 +5,7 @@
 
     <!-- 插入商品 -->
     <insert id="insert" useGeneratedKeys="true" keyProperty="id">
-        INSERT INTO product (barcode, name, image, json_ingredients, risk_level, risk_msg, 
+        INSERT INTO product (barcode, name, image, json_ingredients, risk_level, risk_msg,
                             create_user, create_time, update_time)
         VALUES (#{barcode}, #{name}, #{image}, #{jsonIngredients}, #{riskLevel}, #{riskMsg},
                 #{createUser}, #{createTime}, #{updateTime})
@@ -59,6 +59,7 @@
             </if>
         </where>
         ORDER BY update_time DESC
+
     </select>
 
 </mapper>
