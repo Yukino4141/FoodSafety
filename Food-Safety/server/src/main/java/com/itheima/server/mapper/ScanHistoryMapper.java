@@ -27,7 +27,7 @@ public interface ScanHistoryMapper {
      * @return 扫描历史列表
      */
     @Select("SELECT * FROM scan_history WHERE user_id = #{userId} " +
-            "ORDER BY scan_time DESC LIMIT 50")
+            "ORDER BY scan_time DESC")
     List<ScanHistory> listByUserId(Long userId);
 
     /**

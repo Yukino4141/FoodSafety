@@ -1,6 +1,9 @@
 package com.itheima.server.service.impl;
 
+import com.github.pagehelper.Page;
+import com.github.pagehelper.PageHelper;
 import com.itheima.common.context.BaseContext;
+import com.itheima.common.result.PageResult;
 import com.itheima.pojo.entity.Product;
 import com.itheima.pojo.entity.ScanHistory;
 import com.itheima.pojo.vo.ProductVO;
@@ -49,19 +52,24 @@ public class ScanHistoryServiceImpl implements ScanHistoryService {
     }
 
     /**
-     * 查询当前用户的扫描历史
-     * @return 商品列表（带历史信息）
+     * 查询当前用户的扫描历史（分页）
+     * @param page 页码
+     * @param pageSize 每页大小
+     * @return 分页结果
      */
     @Override
-    public List<ProductVO> getMyHistory() {
+    public PageResult getMyHistory(Integer page, Integer pageSize) {
         Long userId = BaseContext.getCurrentId();
-        log.info("查询扫描历史，用户ID: {}", userId);
+        log.info("查询扫描历史，用户ID: {}, 页码: {}, 每页大小: {}", userId, page, pageSize);
 
-        // 1. 查询历史记录
-        List<ScanHistory> scanHistories = scanHistoryMapper.listByUserId(userId);
+        // 1. 使用PageHelper进行分页
+        PageHelper.startPage(page, pageSize);
+        
+        // 2. 查询历史记录
+        Page<ScanHistory> scanHistoryPage = (Page<ScanHistory>) scanHistoryMapper.listByUserId(userId);
 
-        // 2. 根据商品ID查询商品信息
-        List<ProductVO> productVOList = scanHistories.stream()
+        // 3. 根据商品ID查询商品信息并转换为VO
+        List<ProductVO> productVOList = scanHistoryPage.getResult().stream()
                 .map(scanHistory -> {
                     Product product = productMapper.getById(scanHistory.getProductId());
                     if (product == null) {
@@ -72,7 +80,7 @@ public class ScanHistoryServiceImpl implements ScanHistoryService {
                 .filter(vo -> vo != null)
                 .collect(Collectors.toList());
 
-        return productVOList;
+        return new PageResult(scanHistoryPage.getTotal(), productVOList);
     }
 
     /**

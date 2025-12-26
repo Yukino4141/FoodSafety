@@ -60,10 +60,5 @@ public interface ProductMapper {
      */
     void deleteByIds(List<Long> ids);
 
-    /**
-     * 分页查询商品（管理端商品列表）
-     * @param dto 查询条件
-     * @return 商品列表
-     */
-    List<Product> pageQuery(ProductPageQueryDTO dto);
+
 }

@@ -1,5 +1,6 @@
 package com.itheima.server.service;
 
+import com.itheima.common.result.PageResult;
 import com.itheima.pojo.entity.Product;
 import com.itheima.pojo.vo.ProductVO;
 
@@ -18,9 +19,11 @@ public interface UserProductService {
     ProductVO scanByBarcode(String barcode);
 
     /**
-     * 关键词搜索商品列表
+     * 关键词搜索商品列表（分页）
      * @param name 商品名称关键词
-     * @return 商品列表
+     * @param page 页码
+     * @param pageSize 每页大小
+     * @return 分页结果
      */
-    List<ProductVO> searchList(String name);
+    PageResult searchList(String name, Integer page, Integer pageSize);
 }

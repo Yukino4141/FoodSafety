@@ -1,5 +1,6 @@
 package com.itheima.server.controller.user;
 
+import com.itheima.common.result.PageResult;
 import com.itheima.common.result.Result;
 import com.itheima.pojo.vo.ProductVO;
 import com.itheima.server.service.UserProductService;
@@ -39,17 +40,22 @@ public class UserProductController {
     }
 
     /**
-     * 关键词搜索商品列表
+     * 关键词搜索商品列表（分页）
      * @param name 商品名称关键词
-     * @return 商品列表
+     * @param page 页码，默认1
+     * @param pageSize 每页大小，默认10
+     * @return 分页结果
      */
     @GetMapping("/list")
     @ApiOperation("关键词搜索商品")
-    public Result<List<ProductVO>> list(@RequestParam String name) {
-        log.info("搜索商品，关键词: {}", name);
+    public Result<PageResult> list(
+            @RequestParam String name,
+            @RequestParam(defaultValue = "1") Integer page,
+            @RequestParam(defaultValue = "10") Integer pageSize) {
+        log.info("搜索商品，关键词: {}, 页码: {}, 每页大小: {}", name, page, pageSize);
         
-        List<ProductVO> productVOList = userProductService.searchList(name);
+        PageResult pageResult = userProductService.searchList(name, page, pageSize);
         
-        return Result.success(productVOList);
+        return Result.success(pageResult);
     }
 }

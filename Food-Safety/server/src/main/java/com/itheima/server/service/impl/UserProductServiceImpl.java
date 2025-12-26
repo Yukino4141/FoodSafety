@@ -1,6 +1,10 @@
 package com.itheima.server.service.impl;
 
+import com.github.pagehelper.Page;
+import com.github.pagehelper.PageHelper;
 import com.itheima.common.context.BaseContext;
+import com.itheima.common.result.PageResult;
+import com.itheima.pojo.dto.ProductPageQueryDTO;
 import com.itheima.pojo.entity.Product;
 import com.itheima.pojo.vo.ProductVO;
 import com.itheima.server.mapper.ProductMapper;
@@ -60,24 +64,31 @@ public class UserProductServiceImpl implements UserProductService {
         return productVO;
     }
 
+
+
     /**
-     * 关键词搜索商品列表
+     * 关键词搜索商品列表（分页）
      * @param name 商品名称关键词
-     * @return 商品列表
+     * @param page 页码
+     * @param pageSize 每页大小
+     * @return 分页结果
      */
     @Override
-    public List<ProductVO> searchList(String name) {
-        log.info("用户搜索商品，关键词: {}", name);
+    public PageResult searchList(String name, Integer page, Integer pageSize) {
+        log.info("用户搜索商品，关键词: {}, 页码: {}, 每页大小: {}", name, page, pageSize);
 
-        // 1. 根据名称模糊查询
-        List<Product> products = productMapper.listByName(name);
+        // 1. 使用PageHelper进行分页
+        PageHelper.startPage(page, pageSize);
+        
+        // 2. 根据名称模糊查询
+        Page<Product> productPage = (Page<Product>) productMapper.listByName(name);
 
-        // 2. 转换为 VO 列表
-        List<ProductVO> productVOList = products.stream()
+        // 3. 转换为 VO 列表
+        List<ProductVO> productVOList = productPage.getResult().stream()
                 .map(this::convertToVO)
                 .collect(Collectors.toList());
 
-        return productVOList;
+        return new PageResult(productPage.getTotal(), productVOList);
     }
 
     /**

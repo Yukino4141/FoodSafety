@@ -1,5 +1,6 @@
 package com.itheima.server.service;
 
+import com.itheima.common.result.PageResult;
 import com.itheima.pojo.vo.ProductVO;
 
 import java.util.List;
@@ -16,10 +17,12 @@ public interface ScanHistoryService {
     void recordScanHistory(Long productId);
 
     /**
-     * 查询当前用户的扫描历史
-     * @return 商品列表（带历史信息）
+     * 查询当前用户的扫描历史（分页）
+     * @param page 页码
+     * @param pageSize 每页大小
+     * @return 分页结果
      */
-    List<ProductVO> getMyHistory();
+    PageResult getMyHistory(Integer page, Integer pageSize);
 
     /**
      * 清空当前用户的扫描历史

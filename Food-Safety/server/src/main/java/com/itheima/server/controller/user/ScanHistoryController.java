@@ -1,5 +1,6 @@
 package com.itheima.server.controller.user;
 
+import com.itheima.common.result.PageResult;
 import com.itheima.common.result.Result;
 import com.itheima.pojo.vo.ProductVO;
 import com.itheima.server.service.ScanHistoryService;
@@ -24,17 +25,21 @@ public class ScanHistoryController {
     private ScanHistoryService scanHistoryService;
 
     /**
-     * 查询我的扫描历史
-     * @return 商品列表
+     * 查询我的扫描历史（分页）
+     * @param page 页码，默认1
+     * @param pageSize 每页大小，默认10
+     * @return 分页结果
      */
     @GetMapping("/list")
     @ApiOperation("查询我的扫描历史")
-    public Result<List<ProductVO>> list() {
-        log.info("查询扫描历史");
+    public Result<PageResult> list(
+            @RequestParam(defaultValue = "1") Integer page,
+            @RequestParam(defaultValue = "10") Integer pageSize) {
+        log.info("查询扫描历史，页码: {}, 每页大小: {}", page, pageSize);
         
-        List<ProductVO> productVOList = scanHistoryService.getMyHistory();
+        PageResult pageResult = scanHistoryService.getMyHistory(page, pageSize);
         
-        return Result.success(productVOList);
+        return Result.success(pageResult);
     }
 
     /**
