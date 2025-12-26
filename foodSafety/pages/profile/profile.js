@@ -84,6 +84,7 @@ Page({
   // 用户登录
   async handleLogin() {
     try {
+    /*
       wx.showLoading({
         title: '登录中...',
         mask: true
@@ -117,7 +118,22 @@ Page({
           });
           this.loadUserStats();
         }
+      });*/
+      
+      wx.navigateTo({
+        url: '/pages/login/login', 
+        success: (res) => {
+          console.log('跳转到登录页成功');
+        },
+        fail: (err) => {
+          console.error('跳转失败，请检查路径是否正确', err);
+          wx.showToast({
+            title: '跳转失败',
+            icon: 'none'
+          });
+        }
       });
+    
     } catch (error) {
       console.error('登录失败:', error);
       wx.showToast({
