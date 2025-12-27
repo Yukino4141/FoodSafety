@@ -1,0 +1,514 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>商品管理 - 食安卫士</title>
+  <link href="https://cdn.bootcdn.net/ajax/libs/twitter-bootstrap/5.1.3/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.8.1/font/bootstrap-icons.css">
+  <style>
+    body {
+      background-color: #f8f9fa;
+    }
+    .navbar {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    }
+    .sidebar {
+      background: white;
+      min-height: calc(100vh - 56px);
+      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+    }
+    .sidebar .nav-link {
+      color: #333;
+      padding: 12px 20px;
+      border-left: 4px solid transparent;
+    }
+    .sidebar .nav-link:hover {
+      background-color: #f8f9fa;
+    }
+    .sidebar .nav-link.active {
+      background-color: #e9ecef;
+      border-left-color: #667eea;
+      color: #667eea;
+    }
+    .content-header {
+      background: white;
+      padding: 20px;
+      margin-bottom: 20px;
+      border-radius: 8px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    .risk-badge {
+      padding: 4px 8px;
+      border-radius: 4px;
+      font-size: 12px;
+    }
+    .risk-safe {
+      background-color: #d4edda;
+      color: #155724;
+    }
+    .risk-danger {
+      background-color: #f8d7da;
+      color: #721c24;
+    }
+    .table-container {
+      background: white;
+      padding: 20px;
+      border-radius: 8px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+  </style>
+</head>
+<body>
+<!-- 导航栏 -->
+<nav class="navbar navbar-dark">
+  <div class="container-fluid">
+            <span class="navbar-brand mb-0 h1">
+                <i class="bi bi-shield-check"></i> 食安卫士管理后台
+            </span>
+    <div class="text-light">
+      <span id="userName"></span>
+      <button class="btn btn-outline-light btn-sm ms-3" id="logoutBtn">
+        <i class="bi bi-box-arrow-right"></i> 退出
+      </button>
+    </div>
+  </div>
+</nav>
+
+<div class="container-fluid">
+  <div class="row">
+    <!-- 侧边栏 -->
+    <div class="col-md-2 p-0">
+      <div class="sidebar">
+        <nav class="nav flex-column mt-3">
+          <a class="nav-link active" href="#">
+            <i class="bi bi-box-seam me-2"></i> 商品管理
+          </a>
+          <a class="nav-link" href="#">
+            <i class="bi bi-people me-2"></i> 员工管理
+          </a>
+          <a class="nav-link" href="#">
+            <i class="bi bi-bar-chart me-2"></i> 数据统计
+          </a>
+        </nav>
+      </div>
+    </div>
+
+    <!-- 主要内容 -->
+    <div class="col-md-10">
+      <!-- 搜索栏 -->
+      <div class="content-header">
+        <div class="row">
+          <div class="col-md-6">
+            <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addModal">
+              <i class="bi bi-plus-circle me-1"></i> 新增商品
+            </button>
+          </div>
+          <div class="col-md-6">
+            <div class="input-group">
+              <input type="text" class="form-control" id="searchName" placeholder="商品名称">
+              <input type="text" class="form-control" id="searchBarcode" placeholder="条形码">
+              <button class="btn btn-outline-primary" type="button" id="searchBtn">
+                <i class="bi bi-search"></i> 搜索
+              </button>
+              <button class="btn btn-outline-secondary" type="button" id="resetBtn">
+                <i class="bi bi-arrow-clockwise"></i> 重置
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 商品表格 -->
+      <div class="table-container">
+        <table class="table table-hover">
+          <thead>
+          <tr>
+            <th>ID</th>
+            <th>商品图片</th>
+            <th>商品名称</th>
+            <th>条形码</th>
+            <th>配料表</th>
+            <th>风险等级</th>
+            <th>创建时间</th>
+            <th>操作</th>
+          </tr>
+          </thead>
+          <tbody id="productTable">
+          <!-- 数据动态加载 -->
+          </tbody>
+        </table>
+
+        <!-- 分页 -->
+        <nav>
+          <ul class="pagination justify-content-center" id="pagination">
+            <!-- 分页动态加载 -->
+          </ul>
+        </nav>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 新增/编辑模态框 -->
+<div class="modal fade" id="productModal" tabindex="-1">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="modalTitle">新增商品</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <form id="productForm">
+        <div class="modal-body">
+          <input type="hidden" id="productId">
+          <div class="mb-3">
+            <label class="form-label">条形码 *</label>
+            <input type="text" class="form-control" id="barcode" required>
+            <div class="form-text">请确保条形码唯一</div>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">商品名称 *</label>
+            <input type="text" class="form-control" id="name" required>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">商品图片</label>
+            <input type="text" class="form-control" id="image">
+            <div class="form-text">可上传图片或输入图片URL</div>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">配料表 *</label>
+            <textarea class="form-control" id="jsonIngredients" rows="4" required></textarea>
+            <div class="form-text">使用逗号分隔配料，如：小麦粉,白砂糖,植物油</div>
+          </div>
+          <div class="alert alert-info">
+            <i class="bi bi-info-circle"></i>
+            系统会自动检测配料表中的风险成分，黑名单包括：代可可脂、反式脂肪酸、苯甲酸钠、山梨酸钾、人工色素、阿斯巴甜、安赛蜜
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+          <button type="submit" class="btn btn-primary">保存</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- 删除确认模态框 -->
+<div class="modal fade" id="deleteModal" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">确认删除</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        确定要删除选中的商品吗？此操作不可恢复。
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+        <button type="button" class="btn btn-danger" id="confirmDeleteBtn">确认删除</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdn.bootcdn.net/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+<script src="https://cdn.bootcdn.net/ajax/libs/bootstrap/5.1.3/js/bootstrap.bundle.min.js"></script>
+<script>
+  $(document).ready(function() {
+    // 全局变量
+    let currentPage = 1;
+    let pageSize = 10;
+    let total = 0;
+    let searchName = '';
+    let searchBarcode = '';
+    let selectedIds = [];
+
+    // 检查登录状态
+    const token = localStorage.getItem('adminToken');
+    if (!token) {
+      window.location.href = 'login.html';
+      return;
+    }
+
+    // 显示用户名
+    $('#userName').text(localStorage.getItem('userName') || '管理员');
+
+    // 退出登录
+    $('#logoutBtn').click(function() {
+      localStorage.removeItem('adminToken');
+      localStorage.removeItem('userName');
+      window.location.href = 'login.html';
+    });
+
+    // 加载商品列表
+    function loadProducts(page = 1) {
+      currentPage = page;
+
+      $.ajax({
+        url: 'http://localhost:8080/admin/product/page',
+        type: 'GET',
+        headers: {
+          'token': token
+        },
+        data: {
+          page: page,
+          pageSize: pageSize,
+          name: searchName,
+          barcode: searchBarcode
+        },
+        success: function(response) {
+          if (response.code === 1) {
+            renderTable(response.data.records);
+            renderPagination(response.data.total);
+          } else {
+            alert(response.msg);
+          }
+        },
+        error: function() {
+          alert('加载失败，请检查网络连接');
+        }
+      });
+    }
+
+    // 渲染表格
+    function renderTable(products) {
+      const $tbody = $('#productTable');
+      $tbody.empty();
+
+      if (products.length === 0) {
+        $tbody.html(`
+                        <tr>
+                            <td colspan="8" class="text-center py-5 text-muted">
+                                <i class="bi bi-box2 fs-1 d-block mb-3"></i>
+                                暂无商品数据
+                            </td>
+                        </tr>
+                    `);
+        return;
+      }
+
+      products.forEach(product => {
+        const riskClass = product.riskLevel === 0 ? 'risk-safe' : 'risk-danger';
+        const riskText = product.riskLevel === 0 ? '安全' : '风险';
+
+        const row = `
+                        <tr>
+                            <td>${product.id}</td>
+                            <td>
+                                ${product.image ?
+                `<img src="${product.image}" alt="商品图" style="width: 50px; height: 50px; object-fit: cover;">` :
+                '<i class="bi bi-image text-muted" style="font-size: 24px;"></i>'}
+                            </td>
+                            <td>${product.name}</td>
+                            <td><code>${product.barcode}</code></td>
+                            <td>
+                                <div class="text-truncate" style="max-width: 200px;"
+                                     title="${product.jsonIngredients}">
+                                    ${product.jsonIngredients}
+                                </div>
+                            </td>
+                            <td>
+                                <span class="risk-badge ${riskClass}">${riskText}</span>
+                                ${product.riskMsg ? `<br><small class="text-danger">${product.riskMsg}</small>` : ''}
+                            </td>
+                            <td>${new Date(product.createTime).toLocaleString()}</td>
+                            <td>
+                                <button class="btn btn-sm btn-outline-primary edit-btn"
+                                        data-id="${product.id}">
+                                    <i class="bi bi-pencil"></i>
+                                </button>
+                                <button class="btn btn-sm btn-outline-danger delete-btn"
+                                        data-id="${product.id}">
+                                    <i class="bi bi-trash"></i>
+                                </button>
+                            </td>
+                        </tr>
+                    `;
+        $tbody.append(row);
+      });
+
+      // 绑定编辑按钮事件
+      $('.edit-btn').click(function() {
+        const productId = $(this).data('id');
+        editProduct(productId);
+      });
+
+      // 绑定删除按钮事件
+      $('.delete-btn').click(function() {
+        const productId = $(this).data('id');
+        showDeleteModal([productId]);
+      });
+    }
+
+    // 渲染分页
+    function renderPagination(totalCount) {
+      total = totalCount;
+      const totalPages = Math.ceil(total / pageSize);
+      const $pagination = $('#pagination');
+      $pagination.empty();
+
+      if (totalPages <= 1) return;
+
+      // 上一页
+      const prevDisabled = currentPage === 1 ? 'disabled' : '';
+      $pagination.append(`
+                    <li class="page-item ${prevDisabled}">
+                        <a class="page-link" href="#" data-page="${currentPage - 1}">上一页</a>
+                    </li>
+                `);
+
+      // 页码
+      for (let i = 1; i <= totalPages; i++) {
+        const active = i === currentPage ? 'active' : '';
+        $pagination.append(`
+                        <li class="page-item ${active}">
+                            <a class="page-link" href="#" data-page="${i}">${i}</a>
+                        </li>
+                    `);
+      }
+
+      // 下一页
+      const nextDisabled = currentPage === totalPages ? 'disabled' : '';
+      $pagination.append(`
+                    <li class="page-item ${nextDisabled}">
+                        <a class="page-link" href="#" data-page="${currentPage + 1}">下一页</a>
+                    </li>
+                `);
+
+      // 绑定分页点击事件
+      $('.page-link').click(function(e) {
+        e.preventDefault();
+        const page = $(this).data('page');
+        if (page && page >= 1 && page <= totalPages) {
+          loadProducts(page);
+        }
+      });
+    }
+
+    // 编辑商品
+    function editProduct(id) {
+      $.ajax({
+        url: `http://localhost:8080/admin/product/page?barcode=&name=&page=1&pageSize=1000`,
+        type: 'GET',
+        headers: { 'token': token },
+        success: function(response) {
+          if (response.code === 1) {
+            const product = response.data.records.find(p => p.id === id);
+            if (product) {
+              $('#productId').val(product.id);
+              $('#barcode').val(product.barcode);
+              $('#name').val(product.name);
+              $('#image').val(product.image || '');
+              $('#jsonIngredients').val(product.jsonIngredients);
+              $('#modalTitle').text('编辑商品');
+              new bootstrap.Modal(document.getElementById('productModal')).show();
+            }
+          }
+        }
+      });
+    }
+
+    // 显示删除确认模态框
+    function showDeleteModal(ids) {
+      selectedIds = ids;
+      new bootstrap.Modal(document.getElementById('deleteModal')).show();
+    }
+
+    // 搜索
+    $('#searchBtn').click(function() {
+      searchName = $('#searchName').val();
+      searchBarcode = $('#searchBarcode').val();
+      loadProducts(1);
+    });
+
+    // 重置搜索
+    $('#resetBtn').click(function() {
+      $('#searchName').val('');
+      $('#searchBarcode').val('');
+      searchName = '';
+      searchBarcode = '';
+      loadProducts(1);
+    });
+
+    // 新增商品按钮
+    $('[data-bs-target="#addModal"]').click(function() {
+      $('#productForm')[0].reset();
+      $('#productId').val('');
+      $('#modalTitle').text('新增商品');
+      new bootstrap.Modal(document.getElementById('productModal')).show();
+    });
+
+    // 保存商品
+    $('#productForm').submit(function(e) {
+      e.preventDefault();
+
+      const productData = {
+        id: $('#productId').val() || null,
+        barcode: $('#barcode').val(),
+        name: $('#name').val(),
+        image: $('#image').val(),
+        jsonIngredients: $('#jsonIngredients').val()
+      };
+
+      const url = productData.id ?
+              'http://localhost:8080/admin/product' :
+              'http://localhost:8080/admin/product';
+      const method = productData.id ? 'PUT' : 'POST';
+
+      $.ajax({
+        url: url,
+        type: method,
+        headers: {
+          'token': token,
+          'Content-Type': 'application/json'
+        },
+        data: JSON.stringify(productData),
+        success: function(response) {
+          if (response.code === 1) {
+            $('#productModal').modal('hide');
+            loadProducts(currentPage);
+            alert('保存成功');
+          } else {
+            alert(response.msg);
+          }
+        },
+        error: function(xhr) {
+          alert('保存失败：' + (xhr.responseJSON?.msg || '网络错误'));
+        }
+      });
+    });
+
+    // 确认删除
+    $('#confirmDeleteBtn').click(function() {
+      $.ajax({
+        url: 'http://localhost:8080/admin/product',
+        type: 'DELETE',
+        headers: {
+          'token': token
+        },
+        data: {
+          ids: selectedIds.join(',')
+        },
+        success: function(response) {
+          if (response.code === 1) {
+            $('#deleteModal').modal('hide');
+            loadProducts(currentPage);
+            alert('删除成功');
+          } else {
+            alert(response.msg);
+          }
+        },
+        error: function() {
+          alert('删除失败');
+        }
+      });
+    });
+
+    // 初始加载
+    loadProducts();
+  });
+</script>
+</body>
+</html>

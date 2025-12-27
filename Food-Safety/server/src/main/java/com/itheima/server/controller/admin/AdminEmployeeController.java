@@ -17,6 +17,8 @@ import org.springframework.web.bind.annotation.*;
 @Slf4j
 @RestController
 @RequestMapping("/admin/employee")
+// 解决跨域问题（必加，否则前端刷新token会报CORS错误）
+@CrossOrigin(origins = "*")
 public class AdminEmployeeController {
 
     @Autowired
@@ -46,4 +48,6 @@ public class AdminEmployeeController {
         // 但通常JWT是无状态的，所以只需要前端清除token即可
         return Result.success("退出成功");
     }
+
+
 }

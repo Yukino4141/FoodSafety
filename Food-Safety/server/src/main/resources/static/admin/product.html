@@ -95,13 +95,12 @@
     </div>
 
     <!-- 主要内容 -->
-    <div class="col-md-10">
-      <!-- 搜索栏 -->
+    <div class="col-md-10 p-4">
       <div class="content-header">
         <div class="row">
           <div class="col-md-6">
-            <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addModal">
-              <i class="bi bi-plus-circle me-1"></i> 新增商品
+            <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#productModal">
+              <i class="bi bi-plus-circle"></i> 新增商品
             </button>
           </div>
           <div class="col-md-6">
@@ -170,10 +169,26 @@
             <label class="form-label">商品名称 *</label>
             <input type="text" class="form-control" id="name" required>
           </div>
+          <!-- 商品图片上传区域 -->
           <div class="mb-3">
             <label class="form-label">商品图片</label>
-            <input type="text" class="form-control" id="image">
-            <div class="form-text">可上传图片或输入图片URL</div>
+            <!-- 隐藏域：存储阿里云图片地址 -->
+            <input type="hidden" id="image" value="">
+            <!-- 图片预览区 -->
+            <div id="imgPreview" style="width:150px;height:150px;border:1px dashed #ccc;border-radius:8px;display:flex;align-items:center;justify-content:center;margin:10px 0;">
+              <i class="bi bi-image text-muted" style="font-size:32px;"></i>
+            </div>
+            <!-- 文件选择按钮 + 上传按钮 -->
+            <div>
+              <input type="file" id="fileUpload" accept="image/*" style="display:none;">
+              <button type="button" class="btn btn-outline-secondary btn-sm" id="chooseFileBtn">
+                <i class="bi bi-file-earmark-image me-1"></i>选择图片
+              </button>
+              <button type="button" class="btn btn-primary btn-sm ms-2" id="uploadImgBtn" disabled>
+                <i class="bi bi-cloud-upload me-1"></i>上传图片
+              </button>
+              <div class="form-text mt-2 text-muted">支持JPG/PNG格式，大小不超过5MB</div>
+            </div>
           </div>
           <div class="mb-3">
             <label class="form-label">配料表 *</label>
@@ -400,8 +415,17 @@
               $('#productId').val(product.id);
               $('#barcode').val(product.barcode);
               $('#name').val(product.name);
-              $('#image').val(product.image || '');
               $('#jsonIngredients').val(product.jsonIngredients);
+
+              // 编辑时回显阿里云图片
+              if (product.image) {
+                $('#image').val(product.image);
+                $('#imgPreview').html(`<img src="${product.image}" style="width:100%;height:100%;object-fit:cover;border-radius:8px;">`);
+                $('#uploadImgBtn').prop('disabled', false);
+              } else {
+                resetImgPreview();
+              }
+
               $('#modalTitle').text('编辑商品');
               new bootstrap.Modal(document.getElementById('productModal')).show();
             }
@@ -433,63 +457,112 @@
     });
 
     // 新增商品按钮
-    $('[data-bs-target="#addModal"]').click(function() {
-      $('#productForm')[0].reset();
-      $('#productId').val('');
-      $('#modalTitle').text('新增商品');
-      new bootstrap.Modal(document.getElementById('productModal')).show();
+    $('#productModal').on('show.bs.modal', function(e) {
+      if (e.relatedTarget && e.relatedTarget.hasAttribute('data-bs-target')) {
+        $('#productForm')[0].reset();
+        $('#productId').val('');
+        $('#modalTitle').text('新增商品');
+        resetImgPreview();
+      }
     });
 
-    // 保存商品
-    $('#productForm').submit(function(e) {
-      e.preventDefault();
+    // 封装上传图片方法
+    function uploadImage(callback) {
+      const file = $('#fileUpload').prop('files')[0];
+      if (!file) {
+        callback(true); // 没有图片直接成功
+        return;
+      }
 
-      const productData = {
-        id: $('#productId').val() || null,
-        barcode: $('#barcode').val(),
-        name: $('#name').val(),
-        image: $('#image').val(),
-        jsonIngredients: $('#jsonIngredients').val()
-      };
-
-      const url = productData.id ?
-              'http://localhost:8080/admin/product' :
-              'http://localhost:8080/admin/product';
-      const method = productData.id ? 'PUT' : 'POST';
+      const formData = new FormData();
+      formData.append('file', file);
 
       $.ajax({
-        url: url,
-        type: method,
-        headers: {
-          'token': token,
-          'Content-Type': 'application/json'
-        },
-        data: JSON.stringify(productData),
-        success: function(response) {
-          if (response.code === 1) {
-            $('#productModal').modal('hide');
-            loadProducts(currentPage);
-            alert('保存成功');
+        url: 'http://localhost:8080/admin/common/upload',
+        type: 'POST',
+        headers: { 'token': token },
+        data: formData,
+        processData: false,
+        contentType: false,
+        success: function(res) {
+          if (res.code === 1) {
+            $('#image').val(res.data); // 回填阿里云地址
+            callback(true);
           } else {
-            alert(response.msg);
+            alert('图片上传失败：' + res.msg);
+            callback(false);
           }
         },
-        error: function(xhr) {
-          alert('保存失败：' + (xhr.responseJSON?.msg || '网络错误'));
+        error: function() {
+          alert('图片上传失败，请检查接口连接！');
+          callback(false);
         }
+      });
+    }
+
+// 保存商品（新增/编辑）
+    $('#productForm').submit(function(e) {
+      e.preventDefault();
+      const $saveBtn = $(this).find('button[type="submit"]');
+      $saveBtn.prop('disabled', true).html('<i class="bi bi-hourglass-split me-1"></i>处理中...');
+
+      // 先自动上传图片
+      uploadImage(function(isSuccess) {
+        if (!isSuccess) {
+          $saveBtn.prop('disabled', false).html('保存');
+          return;
+        }
+
+        // 再提交商品数据
+        const productData = {
+          id: $('#productId').val() || null,
+          barcode: $('#barcode').val(),
+          name: $('#name').val(),
+          image: $('#image').val(),
+          jsonIngredients: $('#jsonIngredients').val()
+        };
+
+        const method = productData.id ? 'PUT' : 'POST';
+
+        $.ajax({
+          url: 'http://localhost:8080/admin/product',
+          type: method,
+          headers: { 'token': token, 'Content-Type': 'application/json' },
+          data: JSON.stringify(productData),
+          success: function(res) {
+            if (res.code === 1) {
+              $('#productModal').modal('hide');
+              loadProducts(currentPage);
+              alert('保存成功');
+            } else {
+              alert('保存失败：' + res.msg);
+            }
+          },
+          error: function(xhr) {
+            alert('保存失败：' + (xhr.responseJSON?.msg || '网络错误'));
+          },
+          complete: function() {
+            $saveBtn.prop('disabled', false).html('保存');
+            resetImgPreview();
+          }
+        });
       });
     });
 
     // 确认删除
     $('#confirmDeleteBtn').click(function() {
+      if (selectedIds.length === 0) {
+        alert('请选择要删除的商品');
+        return;
+      }
+
+      const url = 'http://localhost:8080/admin/product?ids=' + selectedIds.join(',');
+
       $.ajax({
-        url: 'http://localhost:8080/admin/product',
+        url: url,
         type: 'DELETE',
         headers: {
           'token': token
-        },
-        data: {
-          ids: selectedIds.join(',')
         },
         success: function(response) {
           if (response.code === 1) {
@@ -505,6 +578,85 @@
         }
       });
     });
+
+    // 图片上传相关方法
+    // 1. 选择本地图片
+    $('#chooseFileBtn').click(function() {
+      $('#fileUpload').click();
+    });
+
+    // 2. 选择图片后预览+启用上传按钮
+    $('#fileUpload').change(function(e) {
+      const file = e.target.files[0];
+      if (!file) return;
+
+      // 图片格式校验
+      const allowTypes = ['image/jpg', 'image/jpeg', 'image/png'];
+      if (!allowTypes.includes(file.type)) {
+        alert('请选择JPG/PNG格式的图片！');
+        $(this).val('');
+        return;
+      }
+
+      // 图片大小校验（5MB）
+      if (file.size > 5 * 1024 * 1024) {
+        alert('图片大小不能超过5MB！');
+        $(this).val('');
+        return;
+      }
+
+      // 预览图片
+      const reader = new FileReader();
+      reader.onload = function(res) {
+        $('#imgPreview').html(`<img src="${res.target.result}" style="width:100%;height:100%;object-fit:cover;border-radius:8px;">`);
+        $('#uploadImgBtn').prop('disabled', false); // 启用上传按钮
+      }
+      reader.readAsDataURL(file);
+    });
+
+    // 3. 上传图片到阿里云OSS
+    $('#uploadImgBtn').click(function() {
+      const file = $('#fileUpload').prop('files')[0];
+      if (!file) return;
+
+      // 创建FormData对象
+      const formData = new FormData();
+      formData.append('file', file);
+
+      $(this).prop('disabled', true).html('<i class="bi bi-hourglass-split me-1"></i>上传中...');
+
+      $.ajax({
+        url: 'http://localhost:8080/admin/common/upload', // 阿里云上传接口
+        type: 'POST',
+        headers: { 'token': token }, // 携带登录token
+        data: formData,
+        processData: false, // 禁止处理数据
+        contentType: false, // 禁止设置Content-Type
+        success: function(res) {
+          if (res.code === 1) {
+            // 上传成功：把阿里云图片地址回填到隐藏域
+            const ossImgUrl = res.data;
+            $('#image').val(ossImgUrl);
+            alert('图片上传成功！');
+          } else {
+            alert('图片上传失败：' + res.msg);
+            $('#uploadImgBtn').prop('disabled', false).html('<i class="bi bi-cloud-upload me-1"></i>上传图片');
+          }
+        },
+        error: function() {
+          alert('图片上传失败，请检查接口连接！');
+          $('#uploadImgBtn').prop('disabled', false).html('<i class="bi bi-cloud-upload me-1"></i>上传图片');
+        }
+      });
+    });
+
+    // 4. 重置图片预览
+    function resetImgPreview() {
+      $('#imgPreview').html('<i class="bi bi-image text-muted" style="font-size:32px;"></i>');
+      $('#image').val('');
+      $('#fileUpload').val('');
+      $('#uploadImgBtn').prop('disabled', true).html('<i class="bi bi-cloud-upload me-1"></i>上传图片');
+    }
 
     // 初始加载
     loadProducts();

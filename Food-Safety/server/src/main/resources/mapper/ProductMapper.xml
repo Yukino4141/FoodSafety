@@ -47,7 +47,7 @@
         LIMIT 20
     </select>
 
-    <!-- 分页查询商品（管理端商品列表） -->
+    <!-- 查询商品（管理端商品列表） -->
     <select id="pageQuery" resultType="com.itheima.pojo.entity.Product">
         SELECT * FROM product
         <where>
@@ -59,7 +59,6 @@
             </if>
         </where>
         ORDER BY update_time DESC
-
     </select>
 
 </mapper>

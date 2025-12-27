@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.itheima.server.mapper.ProductMapper">
+
+    <!-- 插入商品 -->
+    <insert id="insert" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO product (barcode, name, image, json_ingredients, risk_level, risk_msg,
+                            create_user, create_time, update_time)
+        VALUES (#{barcode}, #{name}, #{image}, #{jsonIngredients}, #{riskLevel}, #{riskMsg},
+                #{createUser}, #{createTime}, #{updateTime})
+    </insert>
+
+    <!-- 更新商品 -->
+    <update id="update">
+        UPDATE product
+        <set>
+            <if test="barcode != null">barcode = #{barcode},</if>
+            <if test="name != null">name = #{name},</if>
+            <if test="image != null">image = #{image},</if>
+            <if test="jsonIngredients != null">json_ingredients = #{jsonIngredients},</if>
+            <if test="riskLevel != null">risk_level = #{riskLevel},</if>
+            <if test="riskMsg != null">risk_msg = #{riskMsg},</if>
+            <if test="updateTime != null">update_time = #{updateTime},</if>
+        </set>
+        WHERE id = #{id}
+    </update>
+
+    <!-- 根据ID删除商品 -->
+    <delete id="deleteById">
+        DELETE FROM product WHERE id = #{id}
+    </delete>
+
+    <!-- 批量删除商品 -->
+    <delete id="deleteByIds">
+        DELETE FROM product WHERE id IN
+        <foreach collection="list" item="id" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+    </delete>
+
+    <!-- 根据名称模糊搜索（用户端关键词搜索） -->
+    <select id="listByName" resultType="com.itheima.pojo.entity.Product">
+        SELECT * FROM product
+        WHERE name LIKE CONCAT('%', #{name}, '%')
+        ORDER BY update_time DESC
+        LIMIT 20
+    </select>
+
+    <!-- 分页查询商品（管理端商品列表） -->
+    <select id="pageQuery" resultType="com.itheima.pojo.entity.Product">
+        SELECT * FROM product
+        <where>
+            <if test="name != null and name != ''">
+                AND name LIKE CONCAT('%', #{name}, '%')
+            </if>
+            <if test="barcode != null and barcode != ''">
+                AND barcode = #{barcode}
+            </if>
+        </where>
+        ORDER BY update_time DESC
+
+    </select>
+
+</mapper>

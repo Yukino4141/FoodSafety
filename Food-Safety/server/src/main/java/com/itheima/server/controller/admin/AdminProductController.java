@@ -3,12 +3,12 @@ package com.itheima.server.controller.admin;
 import com.itheima.common.result.Result;
 import com.itheima.pojo.dto.ProductDTO;
 import com.itheima.pojo.dto.ProductPageQueryDTO;
+import com.itheima.pojo.entity.Product;
 import com.itheima.pojo.vo.ProductPageItemVO;
 import com.itheima.pojo.vo.ProductVO;
 import com.itheima.server.service.ProductService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import javax.validation.Valid;
@@ -67,16 +67,6 @@ public class AdminProductController {
     }
 
     /**
-     * 根据ID查询商品
-     */
-    @GetMapping("/{id}")
-    public Result<ProductVO> getById(@PathVariable Long id) {
-        log.info("根据ID查询商品：{}", id);
-        ProductVO productVO = productService.getById(id);
-        return Result.success(productVO);
-    }
-
-    /**
      * 修改商品
      */
     @PutMapping
@@ -90,7 +80,7 @@ public class AdminProductController {
      * 批量删除商品
      */
     @DeleteMapping
-    public Result<Void> delete(@RequestParam String ids) {
+    public Result<Void> delete(@RequestParam("ids") String ids) {
         log.info("批量删除商品：{}", ids);
 
         List<Long> idList = Arrays.stream(ids.split(","))
@@ -102,7 +92,7 @@ public class AdminProductController {
     }
 
     /**
-     * 风险检测测试接口（用于调试）
+     * 风险检测测试接口
      */
     @PostMapping("/check-risk")
     public Result<ProductVO> checkRisk(@RequestParam String ingredients) {

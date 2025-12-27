@@ -28,13 +28,6 @@ public interface ProductService {
     PageResult<ProductPageItemVO> pageQuery(ProductPageQueryDTO dto);
 
     /**
-     * 根据ID查询商品
-     * @param id 商品ID
-     * @return 商品信息
-     */
-    ProductVO getById(Long id);
-
-    /**
      * 修改商品
      * @param productDTO 商品信息
      */

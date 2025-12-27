@@ -94,26 +94,12 @@ public class ProductServiceImpl implements ProductService {
 
         ProductVO result = new ProductVO();
 
-        if (!StringUtils.hasText(ingredients)) {
-            result.setRiskLevel(0);
-            result.setRiskMsg("配料表为空");
-            return result;
-        }
+        //待接入ai实现风险检测
 
-        // 遍历黑名单检测风险成分
-        for (String dangerous : RISK_BLACKLIST) {
-            if (ingredients.contains(dangerous)) {
-                result.setRiskLevel(1);
-                result.setRiskMsg("检测到风险成分：" + dangerous);
-                log.info("检测到风险成分：{}", dangerous);
-                return result;
-            }
-        }
-
-        // 没有检测到风险成分
         result.setRiskLevel(0);
         result.setRiskMsg(null);
-        log.info("未检测到风险成分");
+        log.info("待接入ai实现风险检测");
+
         return result;
     }
 
@@ -144,22 +130,9 @@ public class ProductServiceImpl implements ProductService {
         }
 
         // 3. 风险检测逻辑
-        log.info("开始风险检测，配料表：{}", productDTO.getJsonIngredients());
         String riskMsg = null;
         Integer riskLevel = 0;
-
-        for (String dangerous : RISK_BLACKLIST) {
-            if (productDTO.getJsonIngredients().contains(dangerous)) {
-                riskLevel = 1;
-                riskMsg = "检测到风险成分：" + dangerous;
-                log.info("检测到风险成分：{}，风险等级：{}", dangerous, riskLevel);
-                break;
-            }
-        }
-
-        if (riskLevel == 0) {
-            log.info("未检测到风险成分，商品安全");
-        }
+        checkRisk(productDTO.getJsonIngredients());
 
         // 4. 转换为实体对象
         Product product = new Product();
@@ -201,25 +174,6 @@ public class ProductServiceImpl implements ProductService {
                     product.getBarcode(), e.getMessage(), e);
             throw new RuntimeException("商品保存失败：" + e.getMessage());
         }
-    }
-
-    /**
-     * 根据ID查询商品
-     */
-    @Override
-    public ProductVO getById(Long id) {
-        log.info("根据ID查询商品：{}", id);
-
-        Product product = productMapper.getById(id);
-        if (product == null) {
-            throw new RuntimeException("商品不存在");
-        }
-
-        // 转换为VO
-        ProductVO vo = convertToProductVO(product);
-
-        log.info("商品查询成功，ID：{}，名称：{}", id, product.getName());
-        return vo;
     }
 
     /**
