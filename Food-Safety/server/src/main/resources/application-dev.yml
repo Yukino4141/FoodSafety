@@ -20,6 +20,6 @@ food-safety:
   ai:
     api-url: xxx
     api-key: xxx
-    model: deepseek-ai/DeepSeek-V3
+    model: xxx
     ocr-url: xxx
     ocr-app-code: xxx
