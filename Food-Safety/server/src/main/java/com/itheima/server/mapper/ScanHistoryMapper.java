@@ -41,4 +41,11 @@ public interface ScanHistoryMapper {
      * @param userId 用户ID
      */
     void deleteByUserId(Long userId);
+    
+    /**
+     * 获取今日扫码数
+     * @return 今日扫码数
+     */
+    @Select("SELECT COUNT(*) FROM scan_history WHERE DATE(scan_time) = CURRENT_DATE")
+    Integer getTodayScans();
 }

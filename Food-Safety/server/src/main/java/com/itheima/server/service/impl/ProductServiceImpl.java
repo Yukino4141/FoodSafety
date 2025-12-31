@@ -13,6 +13,8 @@ import com.itheima.pojo.vo.ProductVO;
 import com.itheima.server.mapper.ProductMapper;
 import com.itheima.server.service.EmployeeService;
 import com.itheima.server.service.ProductService;
+import com.itheima.server.service.AiService;
+import com.itheima.pojo.dto.AiAnalysisResult;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -35,6 +37,9 @@ public class ProductServiceImpl implements ProductService {
 
     @Autowired
     private EmployeeService employeeService;
+    
+    @Autowired
+    private AiService aiService;
 
     // 风险成分黑名单（按照接口文档）
     private static final List<String> RISK_BLACKLIST = Arrays.asList(
@@ -94,11 +99,13 @@ public class ProductServiceImpl implements ProductService {
 
         ProductVO result = new ProductVO();
 
-        //待接入ai实现风险检测
-
-        result.setRiskLevel(0);
-        result.setRiskMsg(null);
-        log.info("待接入ai实现风险检测");
+        // 调用AI服务进行风险检测
+        AiAnalysisResult aiResult = aiService.analyzeIngredients(ingredients);
+        
+        result.setRiskLevel(aiResult.getRiskLevel());
+        result.setRiskMsg(aiResult.getRiskMsg());
+        log.info("AI风险检测完成，评分：{}，风险等级：{}，风险信息：{}", 
+                aiResult.getScore(), aiResult.getRiskLevel(), aiResult.getRiskMsg());
 
         return result;
     }
@@ -130,9 +137,9 @@ public class ProductServiceImpl implements ProductService {
         }
 
         // 3. 风险检测逻辑
-        String riskMsg = null;
-        Integer riskLevel = 0;
-        checkRisk(productDTO.getJsonIngredients());
+        ProductVO riskResult = checkRisk(productDTO.getJsonIngredients());
+        Integer riskLevel = riskResult.getRiskLevel();
+        String riskMsg = riskResult.getRiskMsg();
 
         // 4. 转换为实体对象
         Product product = new Product();

@@ -110,4 +110,13 @@ public class UserServiceImpl implements UserService {
         
         return openid;
     }
+    
+    /**
+     * 获取总用户数
+     * @return 总用户数
+     */
+    @Override
+    public Integer getTotalUsers() {
+        return userMapper.getTotalUsers();
+    }
 }

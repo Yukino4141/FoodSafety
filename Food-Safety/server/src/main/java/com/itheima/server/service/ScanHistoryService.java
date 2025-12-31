@@ -25,4 +25,10 @@ public interface ScanHistoryService {
      * 清空当前用户的扫描历史
      */
     void clearMyHistory();
+    
+    /**
+     * 获取今日扫码数
+     * @return 今日扫码数
+     */
+    Integer getTodayScans();
 }

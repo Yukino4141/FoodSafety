@@ -14,4 +14,10 @@ public interface UserService {
      * @return 用户登录信息（含Token）
      */
     UserLoginVO wxLogin(UserLoginDTO userLoginDTO);
+    
+    /**
+     * 获取总用户数
+     * @return 总用户数
+     */
+    Integer getTotalUsers();
 }

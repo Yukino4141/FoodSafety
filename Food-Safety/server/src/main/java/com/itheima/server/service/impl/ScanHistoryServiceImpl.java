@@ -116,4 +116,13 @@ public class ScanHistoryServiceImpl implements ScanHistoryService {
 
         return productVO;
     }
+    
+    /**
+     * 获取今日扫码数
+     * @return 今日扫码数
+     */
+    @Override
+    public Integer getTodayScans() {
+        return scanHistoryMapper.getTodayScans();
+    }
 }

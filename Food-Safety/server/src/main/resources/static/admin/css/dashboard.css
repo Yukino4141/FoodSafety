@@ -1,0 +1,7 @@
+/* dashboard.css - 简单样式用于仪表盘 */
+.card .display-6 {
+  font-size: 2.2rem;
+  font-weight: 700;
+}
+.content-header h4 { margin-bottom: 0; }
+.content-header p { margin-top: 0.25rem; }
