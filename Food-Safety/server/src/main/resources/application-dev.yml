@@ -8,18 +8,18 @@ food-safety:
     password: 123456
   alioss:
     endpoint: oss-cn-chengdu.aliyuncs.com
-    access-key-id: LTAI5tDcF4uikxjUeKuPmdvW
-    access-key-secret: 9hL7vxHHbUzHt1P8KfU2AluMBGq6M0
+    access-key-id: xxx
+    access-key-secret: xxx
     bucket-name: cangqiongwaimai-yukino
   redis:
     host: localhost
     port: 6379
   wechat:
-    appid: wx409e017ecd4ef421
-    secret: a59d3a45b9913fb156836174c7816fe4
+    appid: xxx
+    secret: xxx
   ai:
-    api-url: https://api.siliconflow.cn/v1/chat/completions
-    api-key: sk-kqjtmsrajgjyzkfbprqyifhhakkcvwjfovfrocfioxplsoty
+    api-url: xxx
+    api-key: xxx
     model: deepseek-ai/DeepSeek-V3
-    ocr-url: https://gjbsb.market.alicloudapi.com/ocrservice/advanced
-    ocr-app-code: bea4694403894fdc81bd203f6ba5e9a0
+    ocr-url: xxx
+    ocr-app-code: xxx
