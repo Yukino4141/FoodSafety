@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.itheima.server.mapper.ProductInventoryMapper">
+
+    <insert id="insert" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO product_inventory (user_id, product_id, purchase_date, expiry_date, status, create_time)
+        VALUES (#{userId}, #{productId}, #{purchaseDate}, #{expiryDate}, #{status}, #{createTime})
+    </insert>
+
+    <select id="listByUserId" resultType="com.itheima.pojo.entity.ProductInventory">
+        SELECT * FROM product_inventory WHERE user_id = #{userId}
+        ORDER BY expiry_date ASC
+    </select>
+
+    <update id="updateStatus">
+        UPDATE product_inventory
+        SET status = #{status}
+        WHERE id = #{id}
+    </update>
+
+</mapper>

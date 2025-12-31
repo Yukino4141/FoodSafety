@@ -52,5 +52,11 @@ food-safety:
   wechat:
     appid: ${food-safety.wechat.appid}
     secret: ${food-safety.wechat.secret}
+  ai:
+    api-url: ${food-safety.ai.api-url}
+    api-key: ${food-safety.ai.api-key}
+    model: ${food-safety.ai.model:deepseek-chat}
+    ocr-url: ${food-safety.ai.ocr-url}
+    ocr-app-code: ${food-safety.ai.ocr-app-code}
 
 

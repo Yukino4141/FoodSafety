@@ -7,6 +7,7 @@ import com.itheima.common.result.PageResult;
 import com.itheima.pojo.entity.Product;
 import com.itheima.pojo.entity.ScanHistory;
 import com.itheima.pojo.vo.ProductVO;
+import com.alibaba.fastjson.JSON;
 import com.itheima.server.mapper.ProductMapper;
 import com.itheima.server.mapper.ScanHistoryMapper;
 import com.itheima.server.service.ScanHistoryService;
@@ -104,8 +105,8 @@ public class ScanHistoryServiceImpl implements ScanHistoryService {
 
         // 1. 将配料字符串转为列表
         String jsonIngredients = product.getJsonIngredients();
-        if (jsonIngredients != null && !jsonIngredients.isEmpty()) {
-            List<String> ingredientList = Arrays.asList(jsonIngredients.split(","));
+        List<String> ingredientList = parseIngredientList(jsonIngredients);
+        if (ingredientList != null) {
             productVO.setIngredientList(ingredientList);
         }
 
@@ -122,5 +123,27 @@ public class ScanHistoryServiceImpl implements ScanHistoryService {
         }
 
         return productVO;
+    }
+
+    private List<String> parseIngredientList(String raw) {
+        if (raw == null || raw.isEmpty()) {
+            return null;
+        }
+        String trimmed = raw.trim();
+        try {
+            if (trimmed.startsWith("[") && trimmed.endsWith("]")) {
+                List<String> arr = JSON.parseArray(trimmed, String.class);
+                if (arr != null) {
+                    return arr.stream().map(String::trim).filter(s -> !s.isEmpty()).collect(Collectors.toList());
+                }
+            }
+        } catch (Exception e) {
+            log.warn("解析配料 JSON 失败，降级为分隔符拆分: {}", raw);
+        }
+        return Arrays.stream(trimmed.split(","))
+                .map(String::trim)
+                .map(s -> s.replaceAll("^\\[?\\\"?", "").replaceAll("\\\"?\\]?$", ""))
+                .filter(s -> !s.isEmpty())
+                .collect(Collectors.toList());
     }
 }

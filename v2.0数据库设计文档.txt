@@ -1,0 +1,190 @@
+# 食安卫士 (Food Safety) V2.0 数据库设计文档
+版本: V2.0
+最后更新: 2025-12-26
+数据库名: food_safety
+字符集: utf8mb4
+
+## 1. 设计概述
+V2.0 版本的数据库设计旨在支持从"单一工具"向"个性化健康社区"的转型。核心设计理念如下：
+1. 模块化扩展: 在保留 V1.0 基础(用户、商品、历史)的前提下，通过新增表实现功能解耦。
+2. JSON 灵活存储: 针对营养成分、过敏原标签、健康画像等非结构化或易变数据，采用 MySQL 的 JSON 类型存储，避免频繁修改表结构。
+3. 社交互动支持: 新增社区、评论及积分体系，支持高并发读写场景(增加了索引优化)。
+
+## 2. 表结构详细说明
+
+### 模块一: 基础用户与权限
+
+#### 1. employee 管理端员工表 (延续V1.0设计)
+| 字段名       | 类型         | 必填 | 说明         | 备注                     |
+|--------------|--------------|------|--------------|--------------------------|
+| id           | BIGINT       | 是   | 主键ID       | 自增                     |
+| username     | VARCHAR(32)  | 是   | 用户名       | 唯一索引 uk_username     |
+| password     | VARCHAR(64)  | 是   | 密码         | MD5加密存储              |
+| name         | VARCHAR(32)  | 是   | 姓名         |                          |
+| phone        | VARCHAR(11)  | 否   | 手机号       |                          |
+| status       | INT          | 是   | 状态         | 1:正常 0:锁定            |
+| create_time  | DATETIME     | 是   | 创建时间     |                          |
+| update_time  | DATETIME     | 是   | 修改时间     |                          |
+
+#### 2. user C端用户表 (延续V1.0设计)
+| 字段名       | 类型         | 必填 | 说明         | 备注                     |
+|--------------|--------------|------|--------------|--------------------------|
+| id           | BIGINT       | 是   | 主键ID       | 自增                     |
+| openid       | VARCHAR(45)  | 是   | 微信唯一标识 | 唯一索引 uk_openid       |
+| nickname     | VARCHAR(32)  | 否   | 微信昵称     |                          |
+| avatar       | VARCHAR(500) | 否   | 微信头像URL  |                          |
+| phone        | VARCHAR(11)  | 否   | 手机号       |                          |
+| create_time  | DATETIME     | 是   | 注册时间     |                          |
+
+### 模块二: 核心商品库 (V2.0增强)
+
+#### 3. product 商品信息表 (V2.0大幅扩展)
+| 字段名           | 类型         | 必填 | 说明         | 备注                     |
+|------------------|--------------|------|--------------|--------------------------|
+| id               | BIGINT       | 是   | 商品ID       | 自增                     |
+| barcode          | VARCHAR(32)  | 是   | 条形码       | 唯一索引 uk_barcode      |
+| name             | VARCHAR(128) | 是   | 商品名称     | 索引 idx_name (模糊搜索用) |
+| image            | VARCHAR(255) | 否   | 商品图片URL  |                          |
+| json_ingredients | TEXT         | 否   | 配料表       | 逗号分隔字符串           |
+| risk_level       | INT          | 否   | 风险等级     | 0:安全 1:中风险 2:高风险 |
+| risk_msg         | VARCHAR(255) | 否   | 风险提示     | 如"含反式脂肪酸"         |
+| nutrition_info   | JSON         | 否   | 营养成分     | [V1.1新增] 示例: {"energy":"200kJ"} |
+| shelf_life       | VARCHAR(32)  | 否   | 保质期       | [V1.2新增] 如"12个月"    |
+| manufacturer     | VARCHAR(128) | 否   | 生产厂商     | [V1.2新增]               |
+| ocr_raw_text     | TEXT         | 否   | OCR原文      | [V2.0新增] 用于AI分析留档 |
+| create_user      | BIGINT       | 否   | 录入人ID     |                          |
+| create_time      | DATETIME     | 是   | 创建时间     |                          |
+| update_time      | DATETIME     | 是   | 更新时间     |                          |
+
+#### 4. product_favorite 商品收藏表 (V1.1新增)
+| 字段名       | 类型         | 必填 | 说明         | 备注                     |
+|--------------|--------------|------|--------------|--------------------------|
+| id           | BIGINT       | 是   | 主键ID       | 自增                     |
+| user_id      | BIGINT       | 是   | 用户ID       | 外键关联 user.id         |
+| product_id   | BIGINT       | 是   | 商品ID       | 外键关联 product.id      |
+| create_time  | DATETIME     | 是   | 收藏时间     |                          |
+
+索引设计:
+- 唯一索引 uk_user_product (user_id, product_id): 防止重复收藏
+
+### 模块三: 个性化服务 (V1.2新增)
+
+#### 5. user_profile 用户健康画像表
+| 字段名       | 类型         | 必填 | 说明         | 备注                     |
+|--------------|--------------|------|--------------|--------------------------|
+| id           | BIGINT       | 是   | 主键ID       | 自增                     |
+| user_id      | BIGINT       | 是   | 用户ID       | 唯一索引                 |
+| allergens    | JSON         | 否   | 过敏原列表   | 数组: ["花生", "海鲜"]   |
+| diet_type    | VARCHAR(50)  | 否   | 饮食偏好     | 如"素食", "清真", "低糖" |
+| health_tags  | JSON         | 否   | 健康标签     | 数组: ["糖尿病", "高血压"] |
+| update_time  | DATETIME     | 否   | 更新时间     |                          |
+
+#### 6. family_member 家庭成员表
+| 字段名       | 类型         | 必填 | 说明         | 备注                     |
+|--------------|--------------|------|--------------|--------------------------|
+| id           | BIGINT       | 是   | 主键ID       | 自增                     |
+| user_id      | BIGINT       | 是   | 主账号ID     |                          |
+| name         | VARCHAR(50)  | 是   | 成员昵称     | 如"宝宝", "爷爷"         |
+| age          | INT          | 否   | 年龄         | 用于辅助AI分析           |
+| health_tags  | JSON         | 否   | 成员健康标签 | 同画像表结构             |
+| create_time  | DATETIME     | 否   | 创建时间     |                          |
+
+#### 7. product_inventory 家庭库存/保质期表
+| 字段名       | 类型         | 必填 | 说明         | 备注                     |
+|--------------|--------------|------|--------------|--------------------------|
+| id           | BIGINT       | 是   | 主键ID       | 自增                     |
+| user_id      | BIGINT       | 是   | 用户ID       |                          |
+| product_id   | BIGINT       | 是   | 商品ID       |                          |
+| purchase_date| DATE         | 否   | 购买日期     |                          |
+| expiry_date  | DATE         | 是   | 过期日期     | 核心字段,用于计算倒计时  |
+| status       | INT          | 否   | 状态         | 1:正常 2:临期 3:过期 4:消耗完 |
+| create_time  | DATETIME     | 否   | 记录时间     |                          |
+
+索引设计:
+- 索引 idx_user_expiry (user_id, expiry_date): 用于快速查询某用户即将过期的食品
+
+### 模块四: 社区与互动 (V2.0新增)
+
+#### 8. community_post 社区帖子表
+| 字段名       | 类型         | 必填 | 说明         | 备注                     |
+|--------------|--------------|------|--------------|--------------------------|
+| id           | BIGINT       | 是   | 帖子ID       | 自增                     |
+| user_id      | BIGINT       | 是   | 发帖人ID     |                          |
+| title        | VARCHAR(200) | 否   | 标题         |                          |
+| content      | TEXT         | 是   | 内容         |                          |
+| images       | JSON         | 否   | 图片列表     | 数组: ["url1", "url2"]   |
+| like_count   | INT          | 否   | 点赞数       | 默认0                    |
+| view_count   | INT          | 否   | 浏览量       | 默认0                    |
+| create_time  | DATETIME     | 是   | 发布时间     | 索引 idx_create_time (用于最新列表) |
+
+#### 9. post_comment 帖子评论表
+| 字段名       | 类型         | 必填 | 说明         | 备注                     |
+|--------------|--------------|------|--------------|--------------------------|
+| id           | BIGINT       | 是   | 评论ID       | 自增                     |
+| post_id      | BIGINT       | 是   | 帖子ID       | 索引 idx_post_id         |
+| user_id      | BIGINT       | 是   | 评论人ID     |                          |
+| content      | VARCHAR(500) | 是   | 评论内容     |                          |
+| create_time  | DATETIME     | 是   | 评论时间     |                          |
+
+#### 10. product_review 商品评价表
+| 字段名       | 类型         | 必填 | 说明         | 备注                     |
+|--------------|--------------|------|--------------|--------------------------|
+| id           | BIGINT       | 是   | ID           | 自增                     |
+| product_id   | BIGINT       | 是   | 商品ID       | 索引 idx_product_id      |
+| user_id      | BIGINT       | 是   | 用户ID       |                          |
+| rating       | INT          | 是   | 评分         | 1-5分                    |
+| comment      | TEXT         | 否   | 评价内容     |                          |
+| create_time  | DATETIME     | 是   | 时间         |                          |
+
+#### 11. user_points 积分流水表
+| 字段名       | 类型         | 必填 | 说明         | 备注                     |
+|--------------|--------------|------|--------------|--------------------------|
+| id           | BIGINT       | 是   | ID           | 自增                     |
+| user_id      | BIGINT       | 是   | 用户ID       | 索引 idx_user_id         |
+| points       | INT          | 是   | 变动值       | 正数增加,负数扣除        |
+| task_type    | VARCHAR(50)  | 是   | 任务类型     | SCAN(扫码), SHARE(分享), POST(发帖) |
+| remark       | VARCHAR(100) | 否   | 备注         |                          |
+| create_time  | DATETIME     | 是   | 时间         |                          |
+
+### 模块五: 历史记录 (V1.0原有)
+
+#### 12. scan_history 扫描历史表
+| 字段名       | 类型         | 必填 | 说明         | 备注                     |
+|--------------|--------------|------|--------------|--------------------------|
+| id           | BIGINT       | 是   | ID           | 自增                     |
+| user_id      | BIGINT       | 是   | 用户ID       | 索引 idx_user_id         |
+| product_id   | BIGINT       | 是   | 商品ID       |                          |
+| scan_time    | DATETIME     | 是   | 扫描时间     |                          |
+
+## 3. 关键字段说明与开发建议
+
+### 3.1 JSON字段的使用
+在 product.nutrition_info 和 user_profile.health_tags 等字段使用了 JSON 类型。
+- 开发建议: 在 Java 后端实体类中，建议使用 String 接收数据库的 JSON 字符串，或者使用 MyBatis 的 TypeHandler 直接映射为 Map 或 List 对象。
+- 查询示例: 如果需要查询"所有包含花生成分的商品"，可以使用 MySQL 的 JSON 函数:
+  SELECT * FROM product WHERE JSON_CONTAINS(nutrition_info, '"花生"', '$.allergens');
+
+### 3.2 积分系统的设计
+积分系统采用流水账模式 (user_points)。
+- 计算总积分: 不在用户表中维护 total_points 字段，而是实时或异步聚合查询 SUM(points)。
+- 优势: 避免并发修改用户表时的锁竞争，且数据可追溯，方便排查积分异常。
+
+### 3.3 索引优化建议
+- 模糊搜索: product 表的 name 字段已加索引，但在数据量极大时(百万级)，LIKE '%keyword%' 会导致索引失效。建议 V2.0 后期引入 Elasticsearch 替代 MySQL 的模糊搜索。
+- 历史记录: scan_history 表数据增长极快，建议配合定时任务清理半年前的旧数据，或进行冷热分离。
+
+## 4. 版本变更摘要 (V1.0 → V2.0)
+
+| 变更类型 | 表/字段                | 说明                                   |
+|----------|------------------------|----------------------------------------|
+| 新增表   | product_favorite       | 实现收藏功能                           |
+| 新增表   | user_profile           | 实现用户健康画像                       |
+| 新增表   | family_member          | 实现多成员管理                         |
+| 新增表   | product_inventory      | 实现保质期提醒                         |
+| 新增表   | community_post         | 社区核心表                             |
+| 新增表   | post_comment           | 社区评论                               |
+| 新增表   | product_review         | 商品评价                               |
+| 新增表   | user_points            | 积分体系                               |
+| 修改表   | product                | 新增 nutrition_info(营养)、shelf_life(保质期)等字段 |
+| 数据迁移 | 无                     | V1.0 数据可直接兼容，只需执行 ALTER TABLE 增加 product 表字段即可 |
+"""

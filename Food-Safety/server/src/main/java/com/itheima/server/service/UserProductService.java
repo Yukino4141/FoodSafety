@@ -26,4 +26,11 @@ public interface UserProductService {
      * @return 分页结果
      */
     PageResult searchList(String name, Integer page, Integer pageSize);
+
+    /**
+     * 收藏/取消收藏商品
+     * @param productId 商品ID
+     * @return 当前是否已收藏
+     */
+    boolean toggleFavorite(Long productId);
 }

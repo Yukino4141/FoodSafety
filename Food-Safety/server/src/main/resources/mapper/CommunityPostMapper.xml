@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.itheima.server.mapper.CommunityPostMapper">
+
+    <insert id="insert" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO community_post (user_id, title, content, images, like_count, view_count, create_time)
+        VALUES (#{userId}, #{title}, #{content}, #{images}, #{likeCount}, #{viewCount}, #{createTime})
+    </insert>
+
+    <select id="listLatest" resultType="com.itheima.pojo.entity.CommunityPost">
+        SELECT * FROM community_post ORDER BY create_time DESC
+    </select>
+
+    <select id="listHot" resultType="com.itheima.pojo.entity.CommunityPost">
+        SELECT * FROM community_post ORDER BY like_count DESC, create_time DESC
+    </select>
+
+    <select id="getById" resultType="com.itheima.pojo.entity.CommunityPost">
+        SELECT * FROM community_post WHERE id = #{id}
+    </select>
+
+    <update id="updateLikeCount">
+        UPDATE community_post SET like_count = #{likeCount} WHERE id = #{id}
+    </update>
+
+</mapper>

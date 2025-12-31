@@ -5,9 +5,11 @@
 
     <!-- 插入商品 -->
     <insert id="insert" useGeneratedKeys="true" keyProperty="id">
-        INSERT INTO product (barcode, name, image, json_ingredients, risk_level, risk_msg, 
-                            create_user, create_time, update_time)
+        INSERT INTO product (barcode, name, image, json_ingredients, risk_level, risk_msg,
+                             nutrition_info, shelf_life, manufacturer, ocr_raw_text,
+                             create_user, create_time, update_time)
         VALUES (#{barcode}, #{name}, #{image}, #{jsonIngredients}, #{riskLevel}, #{riskMsg},
+                #{nutritionInfo}, #{shelfLife}, #{manufacturer}, #{ocrRawText},
                 #{createUser}, #{createTime}, #{updateTime})
     </insert>
 
@@ -21,6 +23,10 @@
             <if test="jsonIngredients != null">json_ingredients = #{jsonIngredients},</if>
             <if test="riskLevel != null">risk_level = #{riskLevel},</if>
             <if test="riskMsg != null">risk_msg = #{riskMsg},</if>
+            <if test="nutritionInfo != null">nutrition_info = #{nutritionInfo},</if>
+            <if test="shelfLife != null">shelf_life = #{shelfLife},</if>
+            <if test="manufacturer != null">manufacturer = #{manufacturer},</if>
+            <if test="ocrRawText != null">ocr_raw_text = #{ocrRawText},</if>
             <if test="updateTime != null">update_time = #{updateTime},</if>
         </set>
         WHERE id = #{id}

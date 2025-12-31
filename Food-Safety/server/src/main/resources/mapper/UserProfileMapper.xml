@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.itheima.server.mapper.UserProfileMapper">
+
+    <insert id="insert" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO user_profile (user_id, allergens, diet_type, health_tags, update_time)
+        VALUES (#{userId}, #{allergens}, #{dietType}, #{healthTags}, #{updateTime})
+    </insert>
+
+    <update id="update">
+        UPDATE user_profile
+        <set>
+            <if test="allergens != null">allergens = #{allergens},</if>
+            <if test="dietType != null">diet_type = #{dietType},</if>
+            <if test="healthTags != null">health_tags = #{healthTags},</if>
+            update_time = #{updateTime}
+        </set>
+        WHERE user_id = #{userId}
+    </update>
+
+</mapper>

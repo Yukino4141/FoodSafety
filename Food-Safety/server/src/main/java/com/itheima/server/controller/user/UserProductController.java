@@ -2,6 +2,7 @@ package com.itheima.server.controller.user;
 
 import com.itheima.common.result.PageResult;
 import com.itheima.common.result.Result;
+import com.itheima.pojo.dto.FavoriteDTO;
 import com.itheima.pojo.vo.ProductVO;
 import com.itheima.server.service.UserProductService;
 import io.swagger.annotations.Api;
@@ -57,5 +58,17 @@ public class UserProductController {
         PageResult pageResult = userProductService.searchList(name, page, pageSize);
         
         return Result.success(pageResult);
+    }
+
+    /**
+     * 收藏/取消收藏
+     * @param dto 收藏请求
+     * @return 当前收藏状态
+     */
+    @PostMapping("/favorite")
+    @ApiOperation("收藏/取消收藏")
+    public Result<Boolean> favorite(@RequestBody FavoriteDTO dto) {
+        boolean favor = userProductService.toggleFavorite(dto.getProductId());
+        return Result.success(favor);
     }
 }
