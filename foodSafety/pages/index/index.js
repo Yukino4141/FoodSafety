@@ -39,18 +39,18 @@ Page({
       {
         id: 2,
         icon: '/assets/icons/history.png',
-        title: '扫描历史',
-        desc: '近期查询记录',
-        url: '/pages/history/history',
+        title: '我的冰箱',
+        desc: '保质期管理',
+        url: '/pages/inventory/inventory',
         color: '#3498db'
       },
       {
         id: 3,
-        icon: '/assets/icons/setting.png',
-        title: '偏好设置',
-        desc: '过敏原管理',
-        url: '/pages/preference/preference',
-        color: '#9b59b6'
+        icon: '/assets/icons/community.png',  // 社区图标
+        title: '食安社区',
+        desc: '分享食品安全经验',
+        url: '/pages/community/community',
+        color: '#e74c3d'
       },
       {
         id: 4,
@@ -59,6 +59,22 @@ Page({
         desc: '每日知识更新',
         url: '/pages/knowledge/knowledge',
         color: '#e67e22'
+      },
+      {
+        id: 5,
+        icon: '/assets/icons/setting.png',  // 偏好设置
+        title: '偏好设置',
+        desc: '过敏原管理',
+        url: '/pages/preference/preference',
+        color: '#9b59b6'
+      },
+      {
+        id: 6,
+        icon: '/assets/icons/ai.png',  
+        title: 'AI健康分析',
+        desc: '配料表智能分析',
+        url: '/pages/ai-analyze/ai-analyze', 
+        color: '#1abc9c'
       }
     ],
     

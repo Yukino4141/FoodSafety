@@ -220,55 +220,84 @@ Page({
     this.startSearch(cleanKeyword);
   },
 
-  // 开始搜索（调用接口）
-  async startSearch(keyword) {
-    // 显示加载
-    this.setData({
-      loading: true,
-      noResult: false,
-      searchResults: [],
-      pageIndex: 1
-    });
+// 开始搜索（调用接口）
+async startSearch(keyword) {
+  // 显示加载
+  this.setData({
+    loading: true,
+    noResult: false,
+    searchResults: [],
+    pageIndex: 1
+  });
+  
+  wx.showLoading({
+    title: '搜索中...',
+    mask: true
+  });
+  
+  try {
+    // 调用搜索接口
+    let results = await app.searchProducts(keyword);
+    console.log('搜索结果原始:', results);
     
-    wx.showLoading({
-      title: '搜索中...',
-      mask: true
-    });
+    // 如果结果是 Promise 数组，等待所有 Promise 完成
+    if (Array.isArray(results) && results.length > 0 && results[0] instanceof Promise) {
+      console.log('检测到 Promise 数组，等待解析...');
+      results = await Promise.all(results);
+      console.log('解析后的结果:', results);
+    }
     
-    try {
-      // 调用搜索接口
-      const results = await app.searchProducts(keyword);
-      console.log('搜索结果:', results);
-      
-      this.setData({
-        searchResults: results,
-        loading: false,
-        noResult: results.length === 0,
-        hasMore: results.length >= 10 // 假设最多返回10条
-      });
-      
-      if (results.length === 0) {
-        wx.showToast({
-          title: '暂无相关商品',
-          icon: 'none',
-          duration: 2000
-        });
+    // 确保每个商品都有必要字段
+    const processedResults = (results || []).map((item, index) => {
+      // 如果是 Promise，提取值
+      if (item && typeof item.then === 'function') {
+        console.warn(`第 ${index} 项仍然是 Promise，跳过`);
+        return null;
       }
       
-    } catch (error) {
-      console.error('搜索失败:', error);
-      
-      this.setData({
-        loading: false,
-        noResult: true
+      return {
+        ...item,
+        // 确保有必要的字段
+        id: item.id || item.productId || '',
+        barcode: item.barcode || '',
+        name: item.name || '未知商品',
+        image: item.image || '/assets/images/default-food.png',
+        safetyStatus: item.safetyStatus || 'SAFE',
+        riskMsg: item.riskMsg || ''
+      };
+    }).filter(item => item !== null); // 过滤掉null
+    
+    console.log('最终处理结果:', processedResults);
+    
+    this.setData({
+      searchResults: processedResults,
+      loading: false,
+      noResult: processedResults.length === 0,
+      hasMore: processedResults.length >= 10
+    });
+    
+    if (processedResults.length === 0) {
+      wx.showToast({
+        title: '暂无相关商品',
+        icon: 'none',
+        duration: 2000
       });
-      
-      this.handleSearchError(error);
-      
-    } finally {
-      wx.hideLoading();
     }
-  },
+    
+  } catch (error) {
+    console.error('搜索失败:', error);
+    
+    this.setData({
+      loading: false,
+      noResult: true
+    });
+    
+    this.handleSearchError(error);
+    
+  } finally {
+    wx.hideLoading();
+  }
+},
 
   // 处理搜索错误
   handleSearchError(error) {
@@ -336,18 +365,116 @@ Page({
     });
   },
 
-  // 查看商品详情
-  viewProductDetail(e) {
-    const product = e.currentTarget.dataset;
+// 查看商品详情
+viewProductDetail(e) {
+  console.log('=== 点击事件详情 ===');
+  
+  const index = e.currentTarget.dataset.index;
+  console.log('获取到的索引:', index);
+  
+  if (index === undefined || index === null) {
+    console.error('没有获取到索引');
+    return;
+  }
+  
+  const idx = parseInt(index);
+  const product = this.data.searchResults[idx];
+  
+  if (!product) {
+    console.error('商品不存在');
+    return;
+  }
+  
+  console.log('跳转商品:', product);
+  
+  // 如果商品是 Promise，需要特殊处理
+  if (product && typeof product.then === 'function') {
+    console.warn('商品是 Promise，尝试解析...');
+    product.then(resolvedProduct => {
+      console.log('解析后的商品:', resolvedProduct);
+      this.navigateWithProduct(resolvedProduct);
+    }).catch(error => {
+      console.error('解析商品 Promise 失败:', error);
+      wx.showToast({
+        title: '商品信息加载失败',
+        icon: 'none'
+      });
+    });
+    return;
+  }
+  
+  // 正常跳转
+  this.navigateWithProduct(product);
+},
+
+// 使用商品数据进行跳转
+navigateWithProduct(product) {
+  console.log('跳转商品数据:', product);
+  
+  // 确保 product 是对象
+  if (!product || typeof product !== 'object') {
+    console.error('商品数据无效:', product);
+    wx.showToast({
+      title: '商品信息无效',
+      icon: 'none'
+    });
+    return;
+  }
+  
+  // 优先使用barcode
+  if (product.barcode) {
+    console.log('使用商品barcode跳转:', product.barcode);
+    wx.navigateTo({
+      url: `/pages/detail/detail?barcode=${product.barcode}`
+    });
+    return;
+  }
+  
+  // 其次使用id
+  if (product.id) {
+    console.log('使用商品id跳转:', product.id);
+    wx.navigateTo({
+      url: `/pages/detail/detail?id=${product.id}`
+    });
+    return;
+  }
+  
+  // 如果都没有，显示错误
+  console.error('商品没有barcode或id:', product);
+  wx.showToast({
+    title: '商品信息不完整',
+    icon: 'none'
+  });
+},
+
+  // 使用商品数据进行跳转
+  navigateWithProduct(product) {
+    console.log('跳转商品:', product);
+    
+    // 优先使用barcode
     if (product.barcode) {
+      console.log('使用商品barcode跳转:', product.barcode);
       wx.navigateTo({
         url: `/pages/detail/detail?barcode=${product.barcode}`
       });
-    } else if (product.id) {
+      return;
+    }
+    
+    // 其次使用id
+    if (product.id) {
+      console.log('使用商品id跳转:', product.id);
       wx.navigateTo({
         url: `/pages/detail/detail?id=${product.id}`
       });
+      return;
     }
+    
+    // 如果都没有，显示错误
+    console.error('商品没有barcode或id');
+    wx.showToast({
+      title: '商品信息不完整',
+      icon: 'none'
+    });
   },
 
   // 上拉加载更多

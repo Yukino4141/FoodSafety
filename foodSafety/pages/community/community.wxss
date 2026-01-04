@@ -1,0 +1,257 @@
+/* pages/community/community.wxss */
+.community-page {
+  min-height: 100vh;
+  background: #f5f5f5;
+}
+
+/* 头部 */
+.header-bar {
+  background: white;
+  padding: 20rpx 30rpx;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1rpx solid #f0f0f0;
+}
+
+.header-title {
+  display: flex;
+  flex-direction: column;
+}
+
+.title-text {
+  font-size: 36rpx;
+  font-weight: bold;
+  color: #333;
+}
+
+.title-sub {
+  font-size: 22rpx;
+  color: #95a5a6;
+  margin-top: 5rpx;
+}
+
+.publish-btn {
+  background: #2ecc71;
+  color: white;
+  border-radius: 40rpx;
+  padding: 12rpx 30rpx;
+  font-size: 26rpx;
+  line-height: 1;
+}
+
+/* 排序标签 */
+.sort-tabs {
+  background: white;
+  display: flex;
+  padding: 0 30rpx;
+  border-bottom: 1rpx solid #f0f0f0;
+}
+
+.sort-tab {
+  padding: 20rpx 30rpx;
+  display: flex;
+  align-items: center;
+  color: #7f8c8d;
+  font-size: 28rpx;
+  border-bottom: 4rpx solid transparent;
+}
+
+.sort-tab.active {
+  color: #2ecc71;
+  border-bottom-color: #2ecc71;
+}
+
+.tab-text {
+  margin-left: 8rpx;
+}
+
+/* 帖子卡片 */
+.post-list {
+  height: calc(100vh - 180rpx);
+}
+
+.post-card {
+  background: white;
+  margin: 20rpx 30rpx;
+  padding: 30rpx;
+  border-radius: 16rpx;
+  box-shadow: 0 4rpx 12rpx rgba(0, 0, 0, 0.05);
+}
+
+/* 用户信息 */
+.user-info {
+  display: flex;
+  align-items: center;
+  margin-bottom: 25rpx;
+}
+
+.user-avatar {
+  width: 70rpx;
+  height: 70rpx;
+  border-radius: 50%;
+  margin-right: 20rpx;
+}
+
+.user-details {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.user-name {
+  font-size: 28rpx;
+  font-weight: 600;
+  color: #333;
+  margin-bottom: 5rpx;
+}
+
+.post-time {
+  font-size: 22rpx;
+  color: #95a5a6;
+}
+
+/* 帖子内容 */
+.post-title {
+  margin-bottom: 20rpx;
+}
+
+.title-text {
+  font-size: 32rpx;
+  font-weight: bold;
+  color: #333;
+  line-height: 1.4;
+}
+
+.post-content {
+  margin-bottom: 25rpx;
+}
+
+.content-text {
+  font-size: 28rpx;
+  color: #555;
+  line-height: 1.6;
+}
+
+/* 图片 */
+.post-images {
+  margin-bottom: 25rpx;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10rpx;
+}
+
+.image-item {
+  width: 220rpx;
+  height: 220rpx;
+  border-radius: 12rpx;
+  overflow: hidden;
+}
+
+.post-image {
+  width: 100%;
+  height: 100%;
+}
+
+/* 操作栏 */
+.post-actions {
+  display: flex;
+  justify-content: space-around;
+  padding-top: 20rpx;
+  border-top: 1rpx solid #f0f0f0;
+}
+
+.action-item {
+  display: flex;
+  align-items: center;
+  padding: 15rpx 25rpx;
+  color: #7f8c8d;
+  font-size: 26rpx;
+}
+
+.action-item.liked {
+  color: #e74c3c;
+}
+
+.action-count {
+  margin-left: 10rpx;
+}
+
+/* 悬浮按钮 */
+.float-action-btn {
+  position: fixed;
+  right: 40rpx;
+  bottom: 80rpx;
+  width: 100rpx;
+  height: 100rpx;
+  background: #2ecc71;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 8rpx 20rpx rgba(46, 204, 113, 0.3);
+  z-index: 100;
+}
+
+/* 加载更多 */
+.load-more {
+  padding: 40rpx;
+  text-align: center;
+  color: #95a5a6;
+  font-size: 26rpx;
+}
+
+.loading-more {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 15rpx;
+}
+
+.mini-spinner {
+  width: 30rpx;
+  height: 30rpx;
+  border: 4rpx solid #f3f3f3;
+  border-top: 4rpx solid #2ecc71;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* 空状态 */
+.empty-overlay {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 60vh;
+}
+
+.empty-content {
+  text-align: center;
+}
+
+.empty-text {
+  display: block;
+  font-size: 32rpx;
+  color: #95a5a6;
+  margin: 20rpx 0 10rpx;
+}
+
+.empty-subtext {
+  display: block;
+  font-size: 24rpx;
+  color: #bdc3c7;
+  margin-bottom: 40rpx;
+}
+
+.empty-action {
+  background: #2ecc71;
+  color: white;
+  border-radius: 40rpx;
+  padding: 20rpx 40rpx;
+  font-size: 28rpx;
+}

@@ -5,7 +5,12 @@
     "pages/search/search",
     "pages/history/history",
     "pages/profile/profile",
-    "pages/login/login"
+    "pages/login/login",
+    "pages/favorites/favorites",
+    "pages/inventory/inventory",
+    "pages/community/community",
+    "pages/community/create/create",
+    "pages/ai-analyze/ai-analyze"
   ],
   "window": {
     "navigationBarTitleText": "食安卫士",

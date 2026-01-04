@@ -99,11 +99,12 @@
     
     <!-- 搜索结果列表 -->
     <view class="results-list" wx:if="{{searchResults.length > 0}}">
-      <block wx:for="{{searchResults}}" wx:key="id">
+      <block wx:for="{{searchResults}}" wx:key="id" wx:for-index="index">
         <view 
           class="product-card" 
           data-id="{{item.id}}"
           data-barcode="{{item.barcode}}"
+          data-index="{{index}}"
           bindtap="viewProductDetail"
           hover-class="card-hover"
         >

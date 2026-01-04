@@ -1,53 +1,412 @@
 <!-- pages/profile/profile.wxml -->
-<view class="container">
-  <view class="header-section">
-    <view class="user-card">
-      <block wx:if="{{isLoggedIn}}">
-        <image class="avatar" src="{{userInfo.avatarUrl || '/assets/images/default-avatar.png'}}" mode="aspectFill"></image>
-        <view class="user-info">
-          <text class="nickname">{{userInfo.nickName}}</text>
-          <text class="user-tag">食安守护者</text>
+<view class="profile-container">
+  <!-- 头部用户信息 -->
+  <view class="user-header" wx:if="{{!editingProfile && !showAddFamily && !showFamilyList}}">
+    <view class="user-info-card">
+      <view class="avatar-section">
+        <image 
+          class="avatar" 
+          src="{{userInfo.avatarUrl || '/assets/images/default-avatar.png'}}" 
+          mode="aspectFill"
+        />
+        <view class="user-basic">
+          <text class="nickname">{{userInfo.nickName || '未登录用户'}}</text>
+          <text class="member-info">已守护食安 {{memberDays}} 天</text>
+          <view class="vip-badge" wx:if="{{isVip}}">
+            <text class="vip-text">VIP会员</text>
+            <text class="expire-text">有效期至 {{vipExpireDate}}</text>
+          </view>
         </view>
-      </block>
-      <block wx:else>
-        <image class="avatar" src="/assets/images/default-avatar.png" mode="aspectFill"></image>
-        <button class="login-btn" bindtap="handleLogin">点击登录账号</button>
-      </block>
-    </view>
-  </view>
-
-  <view class="stats-card">
-    <view class="stats-item" bindtap="viewHistory">
-      <text class="stats-num">{{stats.totalScan}}</text>
-      <text class="stats-label">累计检测</text>
-    </view>
-    <view class="stats-item">
-      <text class="stats-num risk">{{stats.riskCount}}</text>
-      <text class="stats-label">发现风险</text>
-    </view>
-    <view class="stats-item">
-      <text class="stats-num safe">{{stats.safeCount}}</text>
-      <text class="stats-label">安全通过</text>
-    </view>
-    <view class="stats-item" bindtap="viewFavorites">
-      <text class="stats-num">{{stats.favoriteCount}}</text>
-      <text class="stats-label">我的收藏</text>
-    </view>
-  </view>
-
-  <view class="menu-list">
-    <view class="menu-item" wx:for="{{menuItems}}" wx:key="text" bindtap="navigateTo" data-url="{{item.url}}">
-      <view class="menu-left">
-        <view class="icon-wrapper {{item.icon}}">
-          <view class="dot"></view>
-        </view>
-        <text class="menu-text">{{item.text}}</text>
       </view>
-      <view class="arrow-right"></view>
+      
+      <view class="login-section" wx:if="{{!isLoggedIn}}">
+        <text class="login-tip">登录后享受完整服务</text>
+        <button class="login-btn" bindtap="handleLogin">立即登录</button>
+      </view>
+      
+      <view class="logout-section" wx:else>
+        <button class="logout-btn" bindtap="handleLogout">退出登录</button>
+      </view>
     </view>
   </view>
 
-  <view class="footer-section" wx:if="{{isLoggedIn}}">
-    <button class="logout-btn" bindtap="handleLogout">退出当前账号</button>
+  <!-- 用户画像编辑页面 -->
+  <view class="profile-edit-page" wx:if="{{editingProfile}}">
+    <view class="edit-header">
+      <view class="back-btn" bindtap="cancelEdit">
+        <text class="icon">←</text>
+        <text>返回</text>
+      </view>
+      <text class="edit-title">编辑健康档案</text>
+      <view class="clear-btn" bindtap="clearAllSelections">
+        <text class="icon">🗑️</text>
+        <text>清空</text>
+      </view>
+    </view>
+
+    <!-- 过敏原选择 -->
+    <view class="section">
+      <view class="section-header">
+        <text class="section-title">过敏原（多选）</text>
+        <text class="section-subtitle">选择您过敏的食物成分</text>
+      </view>
+      <view class="tags-container">
+        <view 
+          wx:for="{{selectOptions.allergens}}" 
+          wx:key="name"
+          class="tag-item {{item.selected ? 'selected' : ''}}"
+          bindtap="toggleAllergen"
+          data-index="{{index}}"
+        >
+          <text>{{item.name}}</text>
+        </view>
+      </view>
+    </view>
+
+    <!-- 饮食偏好选择 -->
+    <view class="section">
+      <view class="section-header">
+        <text class="section-title">饮食偏好（单选）</text>
+        <text class="section-subtitle">选择适合您的饮食方式</text>
+      </view>
+      <view class="diet-container">
+        <view 
+          wx:for="{{selectOptions.dietTypes}}" 
+          wx:key="value"
+          class="diet-item {{tempProfile.dietType === item.value ? 'selected' : ''}}"
+          bindtap="selectDietType"
+          data-value="{{item.value}}"
+        >
+          <text>{{item.name}}</text>
+        </view>
+      </view>
+    </view>
+
+    <!-- 健康标签选择 -->
+    <view class="section">
+      <view class="section-header">
+        <text class="section-title">健康状况（多选）</text>
+        <text class="section-subtitle">有助于为您提供个性化建议</text>
+      </view>
+      <view class="tags-container">
+        <view 
+          wx:for="{{selectOptions.healthTags}}" 
+          wx:key="name"
+          class="tag-item {{item.selected ? 'selected' : ''}}"
+          bindtap="toggleHealthTag"
+          data-index="{{index}}"
+        >
+          <text>{{item.name}}</text>
+        </view>
+      </view>
+    </view>
+
+    <!-- 当前选择预览 -->
+    <view class="preview-section" wx:if="{{tempProfile.allergens.length > 0 || tempProfile.dietType || tempProfile.healthTags.length > 0}}">
+      <view class="preview-header">
+        <text class="preview-title">已选择：</text>
+      </view>
+      <view class="preview-content">
+        <text wx:if="{{tempProfile.allergens.length > 0}}">过敏原：{{tempProfile.allergens.join('、')}}</text>
+        <text wx:if="{{tempProfile.dietType}}">饮食偏好：{{tempProfile.dietType}}</text>
+        <text wx:if="{{tempProfile.healthTags.length > 0}}">健康标签：{{tempProfile.healthTags.join('、')}}</text>
+      </view>
+    </view>
+
+    <!-- 操作按钮 -->
+    <view class="action-buttons">
+      <button class="cancel-btn" bindtap="cancelEdit">取消</button>
+      <button class="save-btn" bindtap="saveProfile">保存设置</button>
+    </view>
+  </view>
+
+  <!-- 家庭成员管理页面 -->
+  <view class="family-page" wx:if="{{showFamilyList}}">
+    <view class="family-header">
+      <view class="back-btn" bindtap="hideFamilyList">
+        <text class="icon">←</text>
+        <text>返回</text>
+      </view>
+      <text class="family-title">家庭成员管理</text>
+      <view class="add-btn" bindtap="showAddFamilyForm">
+        <text class="icon">+</text>
+        <text>添加</text>
+      </view>
+    </view>
+
+    <!-- 当前视角提示 -->
+    <view class="current-perspective" wx:if="{{currentMemberId}}">
+      <text class="perspective-label">当前视角：</text>
+      <text class="perspective-name">
+        {{getCurrentMemberName(currentMemberId, familyMembers)}}
+      </text>
+    </view>
+
+    <!-- 家庭成员列表 -->
+    <view class="family-list">
+      <view class="list-header">
+        <text class="list-title">已添加的成员</text>
+        <text class="list-count">共{{familyMembers.length}}人</text>
+      </view>
+
+      <view class="member-item current" wx:if="{{currentMemberId}}">
+        <view class="member-info">
+          <text class="member-name">👤 我自己</text>
+          <view class="member-tags">
+            <text class="tag current-tag">当前视角</text>
+          </view>
+        </view>
+        <view class="member-actions">
+          <text class="action-text">默认</text>
+        </view>
+      </view>
+
+      <view 
+        wx:for="{{familyMembers}}" 
+        wx:key="id"
+        class="member-item {{currentMemberId === item.id ? 'selected' : ''}}"
+      >
+        <view class="member-info">
+          <text class="member-name">
+            {{item.name}}
+            <text class="member-age" wx:if="{{item.age}}">({{item.age}}岁)</text>
+          </text>
+          <view class="member-tags">
+            <text 
+              wx:for="{{item.healthTags}}" 
+              wx:key="*this"
+              class="tag"
+            >
+              {{item}}
+            </text>
+            <text class="tag selected-tag" wx:if="{{currentMemberId === item.id}}">✓ 当前</text>
+          </view>
+        </view>
+        <view class="member-actions">
+          <button 
+            class="switch-btn" 
+            bindtap="switchCurrentMember"
+            data-id="{{item.id}}"
+            wx:if="{{currentMemberId !== item.id}}"
+          >
+            切换
+          </button>
+          <button 
+            class="delete-btn" 
+            bindtap="deleteFamilyMember"
+            data-id="{{item.id}}"
+            data-name="{{item.name}}"
+          >
+            删除
+          </button>
+        </view>
+      </view>
+
+      <view class="empty-list" wx:if="{{familyMembers.length === 0}}">
+        <text class="empty-icon">👨‍👩‍👧‍👦</text>
+        <text class="empty-text">暂无家庭成员</text>
+        <text class="empty-hint">点击上方"添加"按钮为家人创建档案</text>
+      </view>
+    </view>
+
+    <!-- 使用说明 -->
+    <view class="usage-guide">
+      <view class="guide-header">
+        <text class="guide-title">📝 使用说明</text>
+      </view>
+      <view class="guide-content">
+        <text class="guide-item">1. 为家人创建健康档案，记录特殊体质</text>
+        <text class="guide-item">2. 切换视角后，扫描结果会考虑对应成员的特殊情况</text>
+        <text class="guide-item">3. 适合为老人、小孩、孕妇等特殊人群单独管理</text>
+      </view>
+    </view>
+  </view>
+
+  <!-- 添加家庭成员表单 -->
+  <view class="add-family-page" wx:if="{{showAddFamily}}">
+    <view class="add-family-header">
+      <view class="back-btn" bindtap="hideAddFamilyForm">
+        <text class="icon">←</text>
+        <text>取消</text>
+      </view>
+      <text class="add-title">添加家庭成员</text>
+      <view class="save-btn" bindtap="addFamilyMember">
+        <text class="icon">✓</text>
+        <text>保存</text>
+      </view>
+    </view>
+
+    <!-- 表单内容 -->
+    <view class="add-form">
+      <!-- 昵称输入 -->
+      <view class="form-item">
+        <text class="form-label">昵称</text>
+        <input 
+          class="form-input" 
+          placeholder="请输入成员昵称（必填）"
+          value="{{newMember.name}}"
+          bindinput="onMemberInput"
+          data-field="name"
+          maxlength="10"
+        />
+      </view>
+
+      <!-- 年龄输入 -->
+      <view class="form-item">
+        <text class="form-label">年龄</text>
+        <input 
+          class="form-input" 
+          placeholder="请输入年龄（选填）"
+          value="{{newMember.age}}"
+          bindinput="onMemberInput"
+          data-field="age"
+          type="number"
+          maxlength="3"
+        />
+        <text class="form-hint">岁</text>
+      </view>
+
+      <!-- 特殊体质选择 -->
+      <view class="form-item">
+        <view class="form-label-row">
+          <text class="form-label">特殊体质</text>
+          <text class="form-subtitle">（多选，用于AI分析）</text>
+        </view>
+        <view class="tags-container">
+          <view 
+            wx:for="{{familyHealthTags}}" 
+            wx:key="name"
+            class="tag-item {{item.selected ? 'selected' : ''}}"
+            bindtap="toggleFamilyHealthTag"
+            data-index="{{index}}"
+          >
+            <text>{{item.name}}</text>
+          </view>
+        </view>
+      </view>
+
+      <!-- 已选择预览 -->
+      <view class="preview-section" wx:if="{{newMember.healthTags.length > 0}}">
+        <text class="preview-title">已选择的特殊体质：</text>
+        <view class="preview-tags">
+          <text 
+            wx:for="{{newMember.healthTags}}" 
+            wx:key="*this"
+            class="preview-tag"
+          >
+            {{item}}
+          </text>
+        </view>
+      </view>
+    </view>
+
+    <!-- 温馨提示 -->
+    <view class="form-tips">
+      <text class="tip-title">💡 温馨提示</text>
+      <text class="tip-content">
+        添加家庭成员后，可以在首页切换视角。
+        系统会根据不同成员的特殊体质（如乳糖不耐受、过敏等）
+        提供个性化的食品安全建议。
+      </text>
+    </view>
+  </view>
+
+  <!-- 正常状态下的个人中心页面 -->
+  <view class="main-content" wx:if="{{!editingProfile && !showAddFamily && !showFamilyList}}">
+    <!-- 当前视角展示 -->
+    <view class="perspective-card" wx:if="{{currentMemberId && familyMembers.length > 0}}">
+      <view class="perspective-info">
+        <text class="perspective-icon">👁️</text>
+        <view class="perspective-text">
+          <text class="perspective-title">当前视角</text>
+          <text class="perspective-name">
+            {{getCurrentMemberName(currentMemberId, familyMembers)}}
+          </text>
+        </view>
+      </view>
+      <button class="switch-perspective-btn" bindtap="showFamilyList">
+        切换
+      </button>
+    </view>
+
+    <!-- 用户画像展示 -->
+    <view class="profile-card" wx:if="{{isLoggedIn}}">
+      <view class="card-header">
+        <text class="card-title">健康档案</text>
+        <text class="edit-link" bindtap="editProfile">编辑</text>
+      </view>
+      <view class="profile-info">
+        <view class="info-item" wx:if="{{userProfile.allergens.length > 0}}">
+          <text class="info-label">过敏原：</text>
+          <view class="info-content">
+            <text wx:for="{{userProfile.allergens}}" wx:key="*this">
+              <text class="tag">{{item}}</text>
+            </text>
+          </view>
+        </view>
+        <view class="info-item" wx:if="{{userProfile.dietType}}">
+          <text class="info-label">饮食偏好：</text>
+          <text class="info-content">{{userProfile.dietType}}</text>
+        </view>
+        <view class="info-item" wx:if="{{userProfile.healthTags.length > 0}}">
+          <text class="info-label">健康状况：</text>
+          <view class="info-content">
+            <text wx:for="{{userProfile.healthTags}}" wx:key="*this">
+              <text class="tag">{{item}}</text>
+            </text>
+          </view>
+        </view>
+        <view class="empty-tip" wx:if="{{!userProfile.allergens.length && !userProfile.dietType && !userProfile.healthTags.length}}">
+          <text>您还没有设置健康档案</text>
+          <text class="set-link" bindtap="editProfile">点击设置</text>
+        </view>
+      </view>
+    </view>
+
+    <!-- 数据统计 -->
+    <view class="stats-section" wx:if="{{isLoggedIn}}">
+      <view class="stats-grid">
+        <view class="stat-item" bindtap="viewHistory">
+          <text class="stat-number">{{stats.totalScan}}</text>
+          <text class="stat-label">总检测数</text>
+        </view>
+        <view class="stat-item">
+          <text class="stat-number safe">{{stats.safeCount}}</text>
+          <text class="stat-label">安全商品</text>
+        </view>
+        <view class="stat-item">
+          <text class="stat-number risk">{{stats.riskCount}}</text>
+          <text class="stat-label">风险商品</text>
+        </view>
+        <view class="stat-item" bindtap="viewFavorites">
+          <text class="stat-number">{{stats.favoriteCount}}</text>
+          <text class="stat-label">我的收藏</text>
+        </view>
+      </view>
+    </view>
+
+    <!-- 功能菜单 -->
+    <view class="menu-section">
+      <view 
+        wx:for="{{menuItems}}" 
+        wx:key="id"
+        class="menu-item"
+        bindtap="navigateTo"
+        data-url="{{item.url}}"
+        data-event="{{item.event}}"
+      >
+        <view class="menu-left">
+          <text class="menu-icon">{{item.icon}}</text>
+          <view class="menu-text">
+            <text class="menu-title">{{item.text}}</text>
+            <text class="menu-desc">{{item.desc}}</text>
+          </view>
+        </view>
+        <view class="menu-right">
+          <text class="menu-badge" wx:if="{{item.badge > 0}}">{{item.badge}}</text>
+          <text class="arrow">›</text>
+        </view>
+      </view>
+    </view>
   </view>
 </view>

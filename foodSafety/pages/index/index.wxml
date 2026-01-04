@@ -91,7 +91,7 @@
           <view class="scan-stats">
             <view class="stat-item">
               <text class="stat-number">{{stats.todayScan || 0}}</text>
-              <text class="stat-label">今日扫码</text>
+              <text class="stat-label">今日检测</text>
             </view>
             <view class="stat-divider"></view>
             <view class="stat-item">
