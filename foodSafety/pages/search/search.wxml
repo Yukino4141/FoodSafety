@@ -1,0 +1,182 @@
+<!-- pages/search/search.wxml -->
+<view class="search-page">
+  <!-- 状态栏 -->
+  <view class="status-bar" style="height: {{statusBarHeight}}px"></view>
+  
+  <!-- 搜索栏 -->
+  <view class="search-bar">
+    <view class="search-container">
+      <view class="search-wrapper">
+        <icon type="search" size="18" color="#2ecc71" class="search-icon" />
+        <input 
+          class="search-input"
+          placeholder="搜索食品名称、条形码..."
+          placeholder-class="placeholder"
+          value="{{searchKeyword}}"
+          bindinput="onSearchInput"
+          bindconfirm="onSearchConfirm"
+          bindfocus="onSearchFocus"
+          bindblur="onSearchBlur"
+          confirm-type="search"
+          focus="{{autoFocus && searchKeyword === ''}}"
+        />
+        <view class="clear-btn" wx:if="{{searchKeyword}}" bindtap="clearSearchInput">
+          <icon type="clear" size="16" color="#9ca3af" />
+        </view>
+      </view>
+      <view class="search-action" bindtap="onSearchClick">
+        <text class="action-text">搜索</text>
+      </view>
+    </view>
+  </view>
+  
+  <!-- 搜索历史 -->
+  <view class="search-history-section" wx:if="{{searchKeyword === '' && searchHistory.length > 0}}">
+    <view class="section-header">
+      <text class="section-title">搜索历史</text>
+      <text class="clear-btn" bindtap="clearSearchHistory">清空</text>
+    </view>
+    <view class="history-list">
+      <block wx:for="{{searchHistory}}" wx:key="*this">
+        <view 
+          class="history-item" 
+          data-keyword="{{item}}"
+          bindtap="useSearchHistory"
+        >
+          <icon type="time" size="16" color="#9ca3af" />
+          <text class="history-text">{{item}}</text>
+          <icon type="right" size="14" color="#d1d5db" class="arrow-icon" />
+        </view>
+      </block>
+    </view>
+  </view>
+  
+  <!-- 热门搜索（放在搜索历史下面） -->
+  <view class="hot-search-section" wx:if="{{searchKeyword === ''}}">
+    <view class="section-header">
+      <text class="section-title">热门搜索</text>
+    </view>
+    <view class="hot-tags">
+      <block wx:for="{{hotSearches}}" wx:key="index">
+        <view 
+          class="tag-item {{index < 3 ? 'hot-tag' : ''}}" 
+          data-keyword="{{item.keyword}}"
+          bindtap="onHotSearch"
+        >
+          <view class="tag-content">
+            <!-- 排名序号 -->
+            <view class="rank-number {{index < 3 ? 'hot-rank' : ''}}">
+              {{index + 1}}
+            </view>
+            <!-- 关键词 -->
+            <text class="tag-text">{{item.keyword}}</text>
+            <!-- 火花图标（前三名显示） -->
+            <icon 
+              wx:if="{{index < 3}}" 
+              type="fire" 
+              size="14" 
+              color="{{index === 0 ? '#ff6b6b' : index === 1 ? '#ffa726' : '#42a5f5'}}" 
+              class="fire-icon"
+            />
+          </view>
+        </view>
+      </block>
+    </view>
+  </view>
+  
+  <!-- 搜索结果 -->
+  <view class="search-results" wx:if="{{searchKeyword}}">
+    <!-- 搜索结果头部 -->
+    <view class="results-header">
+      <text class="results-title">
+        搜索结果
+        <text class="results-count" wx:if="{{searchResults.length > 0}}">
+          ({{searchResults.length}})
+        </text>
+      </text>
+      <text class="results-keyword">"{{searchKeyword}}"</text>
+    </view>
+    
+    <!-- 搜索结果列表 -->
+    <view class="results-list" wx:if="{{searchResults.length > 0}}">
+      <block wx:for="{{searchResults}}" wx:key="id" wx:for-index="index">
+        <view 
+          class="product-card" 
+          data-id="{{item.id}}"
+          data-barcode="{{item.barcode}}"
+          data-index="{{index}}"
+          bindtap="viewProductDetail"
+          hover-class="card-hover"
+        >
+          <!-- 商品图片 -->
+          <view class="product-image-container">
+            <image 
+              src="{{item.image}}" 
+              class="product-image" 
+              mode="aspectFill"
+              lazy-load
+            />
+            <!-- 安全状态徽章 -->
+            <view class="safety-badge {{item.safetyStatus === 'RISK' || item.safetyStatus === 'DANGER' ? 'badge-danger' : 'badge-safe'}}">
+              <icon 
+                type="{{item.safetyStatus === 'RISK' || item.safetyStatus === 'DANGER' ? 'warn' : 'success'}}" 
+                size="10" 
+                color="#ffffff" 
+              />
+              <text class="badge-text">
+                {{item.safetyStatus === 'DANGER' ? '高风险' : 
+                  item.safetyStatus === 'RISK' ? '有风险' : '安全'}}
+              </text>
+            </view>
+          </view>
+          
+          <!-- 商品信息 -->
+          <view class="product-info">
+            <text class="product-name">{{item.name}}</text>
+            
+            <!-- 风险提示 -->
+            <view class="risk-hint" wx:if="{{item.riskMsg}}">
+              <icon type="warn" size="12" color="#e74c3c" />
+              <text class="hint-text">{{item.riskMsg}}</text>
+            </view>
+            
+            <!-- 配料简略 -->
+            <view class="ingredients-preview" wx:if="{{item.ingredientList && item.ingredientList.length > 0}}">
+              <text class="preview-text">
+                {{item.ingredientList.slice(0, 3).join('、')}}
+                {{item.ingredientList.length > 3 ? '...' : ''}}
+              </text>
+            </view>
+            
+            <!-- 条形码 -->
+            <view class="barcode-info">
+              <icon type="barcode" size="12" color="#9ca3af" />
+              <text class="barcode-text">{{item.barcode}}</text>
+            </view>
+          </view>
+          
+          <!-- 箭头 -->
+          <icon type="right" size="16" color="#d1d5db" class="arrow-icon" />
+        </view>
+      </block>
+    </view>
+    
+    <!-- 无结果 -->
+    <view class="no-results" wx:if="{{noResult && !loading}}">
+      <view class="empty-illustration">
+        <image src="/assets/images/empty-search.png" class="empty-image" mode="aspectFit" />
+      </view>
+      <text class="empty-title">暂无相关商品</text>
+      <text class="empty-desc">换个关键词试试看</text>
+      <view class="empty-action" bindtap="clearSearchInput">
+        <text class="action-text">重新搜索</text>
+      </view>
+    </view>
+  </view>
+  
+  <!-- 加载中 -->
+  <view class="loading-container" wx:if="{{loading}}">
+    <view class="loading-spinner"></view>
+    <text class="loading-text">搜索中...</text>
+  </view>
+</view>

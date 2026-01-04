@@ -1,0 +1,327 @@
+<!-- pages/index/index.wxml -->
+<view class="index-page">
+  
+  <!-- 顶部状态栏 -->
+  <!-- <view class="status-bar" style="height: {{statusBarHeight}}px"></view> -->
+  
+  <!-- 头部区域 -->
+  <view class="header">
+    <!-- 左侧：欢迎语/时间 -->
+    <view class="header-left">
+      <text class="greeting">
+        <text wx:if="{{userInfo}}">{{userInfo.nickName}}，</text>
+        下午好！👋
+      </text>
+      <text class="date-time">{{currentTime}}</text>
+    </view>
+    
+    <!-- 右侧：用户头像/登录按钮 -->
+    <view class="header-right" bindtap="goToProfile">
+      <view class="avatar-container">
+        <image 
+          wx:if="{{userInfo && userInfo.avatarUrl}}" 
+          src="{{userInfo.avatarUrl}}" 
+          class="user-avatar"
+        />
+        <view wx:else class="user-avatar default">
+          <text class="avatar-text">{{userInfo && userInfo.nickName ? userInfo.nickName.charAt(0) : '?'}}</text>
+        </view>
+        <view class="online-dot" wx:if="{{isLoggedIn}}"></view>
+      </view>
+    </view>
+  </view>
+
+  <!-- 搜索卡片 -->
+  <view class="search-card">
+    <view class="card-content">
+      <!-- 搜索框 -->
+      <view class="search-container" bindtap="onSearchClick">
+        <view class="search-wrapper">
+          <icon type="search" size="18" color="#2ecc71" class="search-icon" />
+          <input 
+            class="search-input"
+            placeholder="搜索食品名称、条形码..."
+            placeholder-class="placeholder"
+            value="{{searchKeyword}}"
+            bindinput="onSearchInput"
+            bindconfirm="onSearchConfirm"
+            bindfocus="onSearchFocus"
+            bindblur="onSearchBlur"
+            confirm-type="search"
+          />
+        </view>
+      </view>
+    </view>
+  </view>
+
+  <!-- 核心功能区 -->
+  <view class="core-section">
+    <view class="section-title">
+      <text class="title-text">核心功能</text>
+      <view class="title-decoration"></view>
+    </view>
+    
+    <view class="scan-hero">
+      <view class="scan-card" bindtap="handleScan">
+        <!-- 背景装饰 -->
+        <view class="scan-bg-decoration">
+          <view class="circle circle-1"></view>
+          <view class="circle circle-2"></view>
+          <view class="circle circle-3"></view>
+        </view>
+        
+        <!-- 扫码按钮 -->
+        <view class="scan-main">
+          <view class="scan-icon-container">
+            <view class="scan-icon-bg">
+              <image 
+                src="/assets/icons/scan.png" 
+                class="scan-icon"
+                mode="aspectFit"
+              />
+              <view class="scan-pulse-ring"></view>
+              <view class="scan-pulse-ring delay-1"></view>
+              <view class="scan-pulse-ring delay-2"></view>
+            </view>
+          </view>
+          
+          <text class="scan-title">扫码查毒</text>
+          <text class="scan-subtitle">快速检测食品添加剂风险</text>
+          
+          <view class="scan-stats">
+            <view class="stat-item">
+              <text class="stat-number">{{stats.todayScan || 0}}</text>
+              <text class="stat-label">今日检测</text>
+            </view>
+            <view class="stat-divider"></view>
+            <view class="stat-item">
+              <text class="stat-number">{{stats.totalScan || 0}}</text>
+              <text class="stat-label">累计检测</text>
+            </view>
+            <view class="stat-divider"></view>
+            <view class="stat-item">
+              <text class="stat-number">{{stats.riskCount || 0}}</text>
+              <text class="stat-label">发现风险</text>
+            </view>
+          </view>
+        </view>
+        
+        <!-- 扫描提示 -->
+        <view class="scan-tip">
+          <icon type="info" size="14" color="#95a5a6" />
+          <text class="tip-text">点击扫描商品条形码</text>
+        </view>
+      </view>
+    </view>
+  </view>
+
+  <!-- 快捷功能 -->
+  <view class="quick-features">
+    <view class="section-title">
+      <text class="title-text">快捷功能</text>
+      <view class="title-decoration"></view>
+    </view>
+    
+    <view class="features-grid">
+      <block wx:for="{{features}}" wx:key="id">
+        <view 
+          class="feature-card" 
+          data-url="{{item.url}}" 
+          bindtap="goToFeature"
+          hover-class="card-hover"
+          hover-stay-time="50"
+        >
+          <view class="feature-icon-container" style="background: {{item.color}}15;">
+            <image src="{{item.icon}}" class="feature-icon" mode="aspectFit" />
+            <view class="icon-badge" style="background: {{item.color}}"></view>
+          </view>
+          <view class="feature-content">
+            <text class="feature-title">{{item.title}}</text>
+            <text class="feature-desc">{{item.desc}}</text>
+          </view>
+          <icon type="right" size="16" color="#d1d5db" class="feature-arrow" />
+        </view>
+      </block>
+    </view>
+  </view>
+
+  <!-- 最近扫描记录 -->
+  <view class="recent-scans" wx:if="{{!historyEmpty && recentScans.length > 0}}">
+    <view class="section-header">
+      <view class="section-title">
+        <text class="title-text">最近扫描</text>
+        <view class="title-decoration"></view>
+      </view>
+      <text class="see-all" bindtap="goToHistory">
+        查看全部
+        <icon type="right" size="12" color="#2ecc71" />
+      </text>
+    </view>
+    
+    <scroll-view 
+      class="recent-list" 
+      scroll-x 
+      scroll-with-animation 
+      show-scrollbar="{{false}}"
+    >
+      <view class="recent-container">
+        <block wx:for="{{recentScans}}" wx:key="id">
+          <view 
+            class="recent-card" 
+            data-id="{{item.id}}"
+            data-barcode="{{item.barcode}}"
+            bindtap="viewDetail"
+            bindlongpress="onItemLongPress"
+            hover-class="card-hover"
+          >
+            <!-- 商品图片 -->
+            <view class="product-image-container">
+              <image 
+                src="{{item.image}}" 
+                class="product-image" 
+                mode="aspectFill"
+                lazy-load
+              />
+              <!-- 安全状态徽章 -->
+              <view class="safety-badge {{item.safetyStatus === 'RISK' ? 'badge-danger' : 'badge-safe'}}">
+                <icon 
+                  type="{{item.safetyStatus === 'RISK' ? 'warn' : 'success'}}" 
+                  size="10" 
+                  color="#ffffff" 
+                />
+                <text class="badge-text">
+                  {{item.safetyStatus === 'RISK' ? '有风险' : '安全'}}
+                </text>
+              </view>
+              
+              <!-- 风险提示（如果有） -->
+              <view class="risk-hint" wx:if="{{item.safetyStatus === 'RISK' && item.riskMsg}}">
+                <text class="hint-text">{{item.riskMsg}}</text>
+              </view>
+            </view>
+            
+            <!-- 商品信息 -->
+            <view class="product-info">
+              <text class="product-name">{{item.name}}</text>
+              
+              <!-- 时间信息 -->
+              <view class="product-meta">
+                <icon type="time" size="12" color="#9ca3af" />
+                <text class="scan-time">{{item.scanTime}}</text>
+              </view>
+              
+              <!-- 条形码 -->
+              <view class="barcode-info" bindtap="copyBarcode" data-barcode="{{item.barcode}}">
+                <icon type="barcode" size="12" color="#9ca3af" />
+                <text class="barcode-text">条形码: {{item.barcode}}</text>
+                <icon type="copy" size="12" color="#9ca3af" class="copy-icon" />
+              </view>
+            </view>
+            
+            <!-- 操作按钮 -->
+            <view class="product-actions">
+              <view class="action-btn share" catchtap="shareProduct" data-item="{{item}}">
+                <icon type="share" size="14" color="#6b7280" />
+              </view>
+              <view class="action-btn delete" catchtap="deleteHistoryItem" data-item="{{item}}">
+                <icon type="delete" size="14" color="#ef4444" />
+              </view>
+            </view>
+          </view>
+        </block>
+        
+        <!-- 查看更多卡片 -->
+        <view class="view-more-card" bindtap="goToHistory">
+          <view class="more-content">
+            <icon type="more" size="24" color="#2ecc71" />
+            <text class="more-text">查看更多</text>
+            <text class="more-count">{{stats.totalScan || 0}} 条记录</text>
+          </view>
+        </view>
+      </view>
+    </scroll-view>
+  </view>
+
+  <!-- 空状态 -->
+  <view class="empty-state" wx:if="{{historyEmpty}}">
+    <view class="empty-illustration">
+      <image src="/assets/images/empty-scan.png" class="empty-image" mode="aspectFit" />
+    </view>
+    <text class="empty-title">暂无扫描记录</text>
+    <text class="empty-desc">开始扫描第一个商品吧！</text>
+    <view class="empty-action" bindtap="handleScan">
+      <text class="action-text">立即扫码</text>
+    </view>
+  </view>
+
+  <!-- 底部信息 -->
+  <view class="footer">
+    <view class="safety-tips">
+      <icon type="safe" size="16" color="#2ecc71" />
+      <text class="tips-text">食安卫士已守护您 {{stats.safeCount || 0}} 次安全消费</text>
+    </view>
+    
+    <view class="app-info">
+      <text class="version">食安卫士 v1.0</text>
+      <text class="slogan">扫码识风险，安心享美食</text>
+    </view>
+  </view>
+
+  <!-- 搜索历史弹窗 -->
+  <view class="search-history-modal" wx:if="{{showSearchHistory && searchHistory.length > 0}}">
+    <view class="modal-mask" catchtap="onSearchBlur"></view>
+    <view class="modal-content">
+      <view class="modal-header">
+        <text class="modal-title">搜索历史</text>
+        <view class="header-actions">
+          <text class="action-btn" bindtap="clearSearchHistory">清空</text>
+          <icon 
+            type="cancel" 
+            size="18" 
+            color="#9ca3af" 
+            bindtap="onSearchBlur"
+            class="close-btn"
+          />
+        </view>
+      </view>
+      
+      <view class="history-list">
+        <block wx:for="{{searchHistory}}" wx:key="*this">
+          <view 
+            class="history-item" 
+            data-keyword="{{item}}"
+            bindtap="useSearchHistory"
+          >
+            <icon type="time" size="14" color="#9ca3af" />
+            <text class="history-text">{{item}}</text>
+            <icon type="right" size="14" color="#d1d5db" />
+          </view>
+        </block>
+      </view>
+    </view>
+  </view>
+
+  <!-- 扫码加载动画 -->
+  <view class="scan-loading" wx:if="{{scanning}}">
+    <view class="loading-content">
+      <view class="loading-spinner">
+        <view class="spinner-ring"></view>
+        <view class="spinner-ring delay-1"></view>
+        <view class="spinner-ring delay-2"></view>
+        <icon type="scan" size="32" color="#2ecc71" class="spinner-icon" />
+      </view>
+      <text class="loading-text">正在启动相机...</text>
+      <text class="loading-tip">请对准商品条形码</text>
+    </view>
+  </view>
+
+  <!-- 下拉刷新提示 -->
+  <view class="refresh-indicator" wx:if="{{refreshing}}">
+    <view class="refresh-spinner">
+      <view class="refresh-dot"></view>
+      <view class="refresh-dot"></view>
+      <view class="refresh-dot"></view>
+    </view>
+    <text class="refresh-text">刷新中...</text>
+  </view>
+</view>

@@ -1,0 +1,99 @@
+<!-- pages/login/login.wxml -->
+<view class="login-page">
+  <!-- 背景图 -->
+  <view class="background">
+    <image src="/assets/images/login-bg.png" mode="aspectFill" class="bg-image" />
+    <view class="bg-overlay"></view>
+  </view>
+
+  <!-- 内容区域 -->
+  <view class="content">
+    <!-- Logo区域 -->
+    <view class="logo-section">
+      <view class="logo">
+        <image src="/assets/images/logo.png" mode="aspectFit" />
+      </view>
+      <text class="app-name">食安卫士</text>
+      <text class="app-slogan">扫码识风险，安心享美食</text>
+    </view>
+
+    <!-- 登录按钮区域 -->
+    <view class="login-section">
+      <!-- 微信登录按钮 -->
+      <button 
+        class="login-btn"
+        open-type="getUserProfile"
+        bindtap="handleLogin"
+        hover-class="btn-hover"
+      >
+        <view class="btn-content">
+          <image src="/assets/icons/wechat.png" class="wechat-icon" />
+          <text class="btn-text">微信一键登录</text>
+        </view>
+      </button>
+
+      <!-- 协议勾选框 -->
+      <view class="agreement">
+        <checkbox-group bindchange="toggleAgreement">
+          <checkbox 
+            value="agree" 
+            checked="{{agreed}}"
+            color="#2ecc71"
+            style="transform: scale(0.9);"
+          />
+        </checkbox-group>
+        <text class="agreement-text">
+          我已阅读并同意<text class="link" bindtap="viewAgreement">《用户协议》</text>和<text class="link" bindtap="viewPrivacy">《隐私政策》</text>
+        </text>
+      </view>
+
+      <!-- 错误提示 -->
+      <view class="error-message" wx:if="{{loginError}}">
+        <icon type="warn" size="16" color="#e74c3c" />
+        <text class="error-text">{{loginError}}</text>
+      </view>
+
+      <!-- 游客登录 -->
+      <view class="guest-section" bindtap="loginAsGuest">
+        <text class="guest-text">暂不登录，体验基础功能</text>
+        <icon type="arrow-right" size="12" color="#95a5a6" />
+      </view>
+    </view>
+
+    <!-- 底部信息 -->
+    <view class="footer">
+      <text class="footer-text">食品安全，我们共同守护</text>
+      <text class="footer-text">食安卫士 v1.0</text>
+    </view>
+  </view>
+
+  <!-- 加载动画 -->
+  <view class="loading-overlay" wx:if="{{loading}}">
+    <view class="loading-content">
+      <view class="spinner"></view>
+      <text class="loading-text">{{loadingText}}</text>
+    </view>
+  </view>
+
+  <!-- 协议弹窗 -->
+  <view class="agreement-modal" wx:if="{{showAgreementModal}}">
+    <view class="modal-mask" catchtap="hideAgreementModal"></view>
+    <view class="modal-content">
+      <view class="modal-header">
+        <text class="modal-title">{{modalTitle}}</text>
+        <icon 
+          type="cancel" 
+          size="20" 
+          color="#95a5a6" 
+          bindtap="hideAgreementModal"
+        />
+      </view>
+      <scroll-view class="modal-body" scroll-y>
+        <text class="modal-text">{{modalContent}}</text>
+      </scroll-view>
+      <view class="modal-footer">
+        <button class="modal-btn" bindtap="hideAgreementModal">我知道了</button>
+      </view>
+    </view>
+  </view>
+</view>

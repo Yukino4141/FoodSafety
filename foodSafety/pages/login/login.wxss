@@ -1,0 +1,361 @@
+/* pages/login/login.wxss */
+.login-page {
+  height: 100vh;
+  position: relative;
+  overflow: hidden;
+  font-family: PingFang SC, Microsoft YaHei, sans-serif;
+}
+
+/* 背景图 - 优化层次感 */
+.background {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+}
+
+.bg-image {
+  width: 100%;
+  height: 100%;
+}
+
+.bg-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  /* 调整遮罩透明度，让背景元素更清晰但不抢主体 */
+  background: rgba(46, 204, 113, 0.08);
+  backdrop-filter: blur(1px);
+}
+
+/* 内容区域 - 紧凑布局 */
+.content {
+  position: relative;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  /* 减少上下内边距，让布局更紧凑 */
+  padding: 60rpx 40rpx 40rpx;
+  z-index: 10;
+  box-sizing: border-box;
+}
+
+/* Logo区域 - 强化品牌视觉 */
+.logo-section {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  /* 减少底部空白 */
+  margin-bottom: 20rpx;
+}
+
+.logo {
+  width: 150rpx;
+  height: 150rpx;
+  background: white;
+  border-radius: 30rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  /* 减少Logo底部间距 */
+  margin-bottom: 30rpx;
+  box-shadow: 0 8rpx 25rpx rgba(0, 0, 0, 0.08);
+}
+
+.logo image {
+  width: 110rpx;
+  height: 110rpx;
+}
+
+.app-name {
+  font-size: 46rpx;
+  font-weight: 700;
+  color: #ffffff;
+  margin-bottom: 12rpx;
+  /* 增加字间距，强化品牌感 */
+  letter-spacing: 2rpx;
+}
+
+.app-slogan {
+  font-size: 26rpx;
+  color: #666;
+  text-align: center;
+  /* 弱化slogan，突出标题 */
+  opacity: 0.8;
+}
+
+/* 登录区域 - 强化按钮视觉 */
+.login-section {
+  width: 100%;
+  margin-bottom: 40rpx;
+}
+
+.login-btn {
+  /* 渐变背景，强化按钮视觉 */
+  background: linear-gradient(90deg, #2ecc71, #27ae60);
+  border-radius: 50rpx;
+  height: 100rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 30rpx;
+  /* 柔和阴影，提升质感 */
+  box-shadow: 0 6rpx 20rpx rgba(46, 204, 113, 0.2);
+  /* 取消按钮点击默认样式 */
+  border: none;
+}
+
+.login-btn::after {
+  border: none;
+}
+
+/* 按钮hover效果更自然 */
+.btn-hover {
+  opacity: 0.95;
+  transform: scale(0.98);
+  transition: all 0.2s ease;
+}
+
+.btn-content {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.wechat-icon {
+  width: 46rpx;
+  height: 46rpx;
+  margin-right: 18rpx;
+}
+
+.btn-text {
+  color: white;
+  font-size: 32rpx;
+  font-weight: 600;
+}
+
+/* 隐私协议 - 优化勾选框样式 */
+.agreement {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 40rpx;
+  padding: 0 20rpx;
+}
+
+.agreement checkbox {
+  margin-right: 12rpx;
+  margin-top: 2rpx;
+  transform: scale(0.9);
+  /* 勾选框颜色和品牌色统一 */
+  color: #2ecc71;
+}
+
+.agreement-text {
+  font-size: 24rpx;
+  color: #666;
+  line-height: 1.4;
+}
+
+.link {
+  color: #2ecc71;
+  /* 下划线强化链接感 */
+  text-decoration: underline;
+  text-underline-offset: 4rpx;
+}
+
+/* 错误提示 - 更精致的样式 */
+.error-message {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(231, 76, 60, 0.08);
+  border: 1rpx solid rgba(231, 76, 60, 0.2);
+  border-radius: 12rpx;
+  padding: 18rpx 20rpx;
+  margin: 0 20rpx 20rpx;
+  animation: fadeIn 0.3s ease;
+}
+
+.error-text {
+  font-size: 24rpx;
+  color: #e74c3c;
+  margin-left: 10rpx;
+  flex: 1;
+  text-align: center;
+}
+
+/* 游客登录 - 优化点击区域 */
+.guest-section {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20rpx 0;
+  /* 增加点击区域 */
+  margin: 0 40rpx;
+  border-radius: 8rpx;
+  transition: background 0.2s;
+}
+
+.guest-section:hover {
+  background: rgba(0, 0, 0, 0.02);
+}
+
+.guest-text {
+  font-size: 26rpx;
+  color: #888;
+  margin-right: 8rpx;
+}
+
+/* 底部信息 - 统一样式 */
+.footer {
+  text-align: center;
+  margin-top: auto;
+}
+
+.footer-text {
+  display: block;
+  font-size: 22rpx;
+  color: #999;
+  margin-bottom: 8rpx;
+  /* 弱化底部文字 */
+  opacity: 0.8;
+}
+
+/* 加载动画 - 优化样式 */
+.loading-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(255, 255, 255, 0.95);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.loading-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.spinner {
+  width: 56rpx;
+  height: 56rpx;
+  border: 6rpx solid #f3f3f3;
+  border-top: 6rpx solid #2ecc71;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin-bottom: 24rpx;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.loading-text {
+  font-size: 26rpx;
+  color: #666;
+}
+
+/* 协议弹窗 - 优化质感 */
+.agreement-modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 2000;
+}
+
+.modal-mask {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(2px);
+}
+
+.modal-content {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 85%;
+  max-height: 70vh;
+  background: white;
+  border-radius: 20rpx;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  /* 弹窗阴影提升质感 */
+  box-shadow: 0 10rpx 30rpx rgba(0, 0, 0, 0.15);
+}
+
+.modal-header {
+  padding: 30rpx 30rpx 20rpx;
+  border-bottom: 1rpx solid #f5f5f5;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.modal-title {
+  font-size: 30rpx;
+  font-weight: 600;
+  color: #333;
+}
+
+.modal-body {
+  flex: 1;
+  padding: 30rpx;
+  min-height: 400rpx;
+}
+
+.modal-text {
+  font-size: 26rpx;
+  color: #555;
+  line-height: 1.6;
+}
+
+.modal-footer {
+  padding: 20rpx 30rpx 30rpx;
+  border-top: 1rpx solid #f5f5f5;
+}
+
+.modal-btn {
+  width: 100%;
+  background: #2ecc71;
+  color: white;
+  border-radius: 10rpx;
+  height: 80rpx;
+  line-height: 80rpx;
+  font-size: 28rpx;
+  font-weight: 500;
+}
+
+.modal-btn::after {
+  border: none;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-10rpx);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}

@@ -1,0 +1,529 @@
+<!-- pages/detail/detail.wxml -->
+<view class="detail-page">
+  <!-- 加载状态 -->
+  <view class="loading-overlay" wx:if="{{loading}}">
+    <view class="loading-content">
+      <view class="spinner"></view>
+      <text class="loading-text">正在加载商品信息...</text>
+    </view>
+  </view>
+
+  <!-- 错误状态 -->
+  <view class="error-overlay" wx:if="{{hasError && !loading}}">
+    <view class="error-content">
+      <icon type="warn" size="60" color="#e74c3c" />
+      <text class="error-text">{{error}}</text>
+      <button class="retry-btn" bindtap="rescanProduct" wx:if="{{product.barcode}}">
+        重新加载
+      </button>
+      <button class="retry-btn" bindtap="goBack">
+        返回
+      </button>
+    </view>
+  </view>
+
+  <!-- 商品内容 -->
+  <scroll-view 
+    class="scroll-content" 
+    scroll-y 
+    wx:if="{{!loading && !hasError}}"
+    refresher-enabled="true"
+    refresher-triggered="{{refreshing}}"
+    bindrefresherrefresh="onPullDownRefresh"
+  >
+    <!-- 个性化风险提示 -->
+    <view 
+      class="personalized-warning" 
+      wx:if="{{product.showPersonalizedWarning}}"
+      bindtap="showPersonalizedAnalysis"
+    >
+      <view class="warning-header">
+        <text class="warning-icon">⚠️</text>
+        <text class="warning-title">个性化风险提示</text>
+      </view>
+      <view class="warning-content">
+        <text class="warning-text">{{product.personalizedRiskMsg}}</text>
+        <text class="profile-source" wx:if="{{product.profileName}}">
+          （基于{{product.profileName}}的健康档案）
+        </text>
+        <text class="tap-hint">点击查看详情</text>
+      </view>
+    </view>
+
+    <!-- 商品卡片 -->
+    <view class="product-card">
+      <!-- 商品图片 -->
+      <view class="product-image-container">
+        <image 
+          class="product-image" 
+          src="{{product.image || '/assets/images/default-food.png'}}" 
+          mode="aspectFill" 
+          bindtap="previewImage"
+        />
+        <view class="safety-badge {{product.safetyStatus === 'SAFE' ? 'safe' : 'risk'}}">
+          {{product.safetyText}}
+        </view>
+      </view>
+
+      <!-- 商品信息 -->
+      <view class="product-info">
+        <text class="product-name">{{product.name || '未知商品'}}</text>
+        
+        <view class="product-meta">
+          <!-- 生产厂商 -->
+          <view class="meta-item" wx:if="{{product.manufacturer}}">
+            <icon type="home" size="14" color="#95a5a6" />
+            <text>厂商: {{product.manufacturer}}</text>
+          </view>
+          
+          <!-- 保质期 -->
+          <view class="meta-item" wx:if="{{product.shelfLife}}">
+            <icon type="time" size="14" color="#95a5a6" />
+            <text>保质期: {{product.shelfLife}}</text>
+          </view>
+          
+          <view class="meta-item" wx:if="{{product.barcode}}">
+            <icon type="barcode" size="14" color="#95a5a6" />
+            <text>条形码: {{product.barcode}}</text>
+            <text class="copy-btn" bindtap="copyBarcode">复制</text>
+          </view>
+          
+          <view class="meta-item" wx:if="{{product.updateTime}}">
+            <icon type="time" size="14" color="#95a5a6" />
+            <text>更新时间: {{product.displayTime || product.updateTime}}</text>
+          </view>
+        </view>
+
+        <!-- 风险提示 -->
+        <view class="risk-warning" wx:if="{{product.safetyStatus !== 'SAFE' && product.riskMsg && !product.showPersonalizedWarning}}">
+          <icon type="warn" size="16" color="#e74c3c" />
+          <text class="warning-text">{{product.riskMsg}}</text>
+        </view>
+      </view>
+    </view>
+
+    <!-- 营养成分表（V1.1新增） -->
+    <view class="section-card" wx:if="{{nutritionItems.length > 0}}">
+      <view class="section-header">
+        <view class="section-title-line">
+          <icon type="list" size="18" color="#3498db" />
+          <text class="section-title">营养成分</text>
+        </view>
+        <text class="section-count">共 {{nutritionItems.length}} 种营养素</text>
+      </view>
+      
+      <view class="nutrition-container">
+        <block wx:for="{{nutritionItems}}" wx:key="name">
+          <view class="nutrition-item">
+            <view class="nutrition-name">
+              <text class="nutrition-key">{{item.name}}</text>
+            </view>
+            <view class="nutrition-value">
+              <text class="nutrition-amount">{{item.value}}</text>
+              <text class="nutrition-unit" wx:if="{{item.unit}}">{{item.unit}}</text>
+            </view>
+          </view>
+          <view class="divider" wx:if="{{index < nutritionItems.length - 1}}"></view>
+        </block>
+      </view>
+    </view>
+
+    <!-- 配料分析 -->
+    <view class="section-card">
+      <view class="section-header">
+        <view class="section-title-line">
+          <icon type="list" size="18" color="#2ecc71" />
+          <text class="section-title">配料表</text>
+        </view>
+        <text class="section-count" wx:if="{{product.ingredientList && product.ingredientList.length > 0}}">
+          共 {{product.ingredientList.length}} 种成分
+          <text wx:if="{{riskCount > 0}}" class="risk-count">({{riskCount}}个风险成分)</text>
+        </text>
+      </view>
+      
+      <!-- 空状态 -->
+      <view class="empty-content" wx:if="{{!product.ingredientList || product.ingredientList.length === 0}}">
+        <icon type="info" size="30" color="#bdc3c7" />
+        <text class="empty-text">暂无配料信息</text>
+      </view>
+      
+      <!-- 配料列表 -->
+      <view class="ingredients-container" wx:else>
+        <block wx:for="{{product.ingredientList}}" wx:key="index">
+          <view 
+            class="ingredient-row" 
+            data-index="{{index}}" 
+            bindtap="showIngredientDetail"
+            data-ingredient="{{item}}"
+          >
+            <view class="ingredient-main">
+              <text class="ingredient-index">{{index + 1}}.</text>
+              <view class="ingredient-name-container">
+                <text class="ingredient-name {{item.risk ? 'risk-name' : ''}} {{isAllergen(item) ? 'allergen-name' : ''}}">
+                  {{item.name}}
+                </text>
+                <text class="allergen-tag" wx:if="{{isAllergen(item)}}">过敏原</text>
+              </view>
+            </view>
+            <view class="ingredient-tags">
+              <view 
+                class="ingredient-tag {{item.risk ? (item.isHighRisk ? 'high-risk-tag' : 'risk-tag') : 'safe-tag'}}"
+                wx:if="{{!isAllergen(item) || item.risk}}"
+              >
+                {{getRiskTagText(item)}}
+              </view>
+              <view 
+                class="ingredient-tag allergen-tag" 
+                wx:if="{{isAllergen(item) && !item.risk}}"
+                bindtap="showAllergenInfo"
+                data-ingredient="{{item}}"
+              >
+                过敏原
+              </view>
+              <icon type="right" size="14" color="#ddd" />
+            </view>
+          </view>
+          <view class="divider" wx:if="{{index < product.ingredientList.length - 1}}"></view>
+        </block>
+      </view>
+    </view>
+
+    <!-- 检测信息 -->
+    <view class="section-card">
+      <view class="section-header">
+        <view class="section-title-line">
+          <icon type="info" size="18" color="#9b59b6" />
+          <text class="section-title">检测信息</text>
+        </view>
+      </view>
+      
+      <view class="info-grid">
+        <view class="info-item">
+          <text class="info-label">安全等级</text>
+          <view class="info-value">
+            <text class="safety-level {{product.safetyStatus.toLowerCase()}}">
+              {{product.safetyText}}
+            </text>
+          </view>
+        </view>
+        <view class="info-item">
+          <text class="info-label">风险等级</text>
+          <text class="info-value">{{product.riskLevelText}}</text>
+        </view>
+        <view class="info-item">
+          <text class="info-label">检测时间</text>
+          <text class="info-value">{{product.displayTime || product.updateTime}}</text>
+        </view>
+        <view class="info-item">
+          <text class="info-label">个性化分析</text>
+          <text class="info-value">
+            <text wx:if="{{product.hasPersonalizedAnalysis}}" class="has-analysis">
+              {{product.profileName ? '已启用(' + product.profileName + ')' : '已启用'}}
+            </text>
+            <text wx:else class="no-analysis">未启用</text>
+          </text>
+        </view>
+        <view class="info-item">
+          <text class="info-label">条形码</text>
+          <text class="info-value">{{product.barcode || '未知'}}</text>
+        </view>
+        <view class="info-item">
+          <text class="info-label">数据来源</text>
+          <text class="info-value">食品安全数据库</text>
+        </view>
+      </view>
+    </view>
+
+    <!-- 用户反馈 -->
+    <view class="feedback-section">
+      <text class="feedback-title">这个信息准确吗？</text>
+      <view class="feedback-buttons">
+        <button 
+          class="feedback-btn accurate" 
+          data-type="accurate"
+          bindtap="submitFeedback"
+        >
+          <icon type="success" size="14" />
+          准确
+        </button>
+        <button 
+          class="feedback-btn inaccurate" 
+          data-type="inaccurate"
+          bindtap="submitFeedback"
+        >
+          <icon type="warn" size="14" />
+          不准确
+        </button>
+        <button 
+          class="feedback-btn outdated" 
+          data-type="outdated"
+          bindtap="submitFeedback"
+        >
+          <icon type="time" size="14" />
+          已过期
+        </button>
+      </view>
+    </view>
+    
+    <!-- 底部空白 -->
+    <view class="bottom-space"></view>
+  </scroll-view>
+
+  <!-- 底部操作栏 -->
+  <view class="action-bar" wx:if="{{!loading && !hasError}}">
+    <view class="action-btn secondary" bindtap="addToShoppingList">
+      <icon type="cart" size="18" />
+      <text>加入清单</text>
+    </view>
+    <view class="action-btn secondary" bindtap="addToInventory">
+      <icon type="fridge" size="18" />
+      <text>加冰箱</text>
+    </view>
+    <view class="action-btn secondary" bindtap="findSaferAlternatives">
+      <icon type="search" size="18" />
+      <text>找相似</text>
+    </view>
+    <view class="action-btn favorite-btn {{product.isFavorite ? 'active' : ''}}" bindtap="toggleFavorite">
+      <icon type="{{product.isFavorite ? 'star' : 'star-o'}}" size="18" />
+      <text>{{product.isFavorite ? '已收藏' : '收藏'}}</text>
+      <text class="loading-dot" wx:if="{{favoriteLoading}}">...</text>
+    </view>
+  </view>
+
+  <!-- 配料详情弹窗 -->
+  <view class="ingredient-modal" wx:if="{{showIngredientModal}}">
+    <view class="modal-mask" bindtap="closeIngredientModal"></view>
+    <view class="modal-content">
+      <view class="modal-header">
+        <text class="modal-title">配料详情</text>
+        <icon 
+          type="cancel" 
+          size="20" 
+          color="#95a5a6" 
+          bindtap="closeIngredientModal"
+        />
+      </view>
+      <scroll-view class="modal-body" scroll-y>
+        <view class="ingredient-detail">
+          <text class="detail-name">{{currentIngredient.name}}</text>
+          <view class="detail-tags">
+            <view class="detail-tag {{currentIngredient.risk ? 'risk-tag' : 'safe-tag'}}">
+              {{currentIngredient.risk ? '风险成分' : '安全成分'}}
+            </view>
+            <view class="detail-tag allergen-tag" wx:if="{{isAllergen({name: currentIngredient.name})}}">
+              过敏原
+            </view>
+          </view>
+          
+          <!-- 风险提示 -->
+          <view class="detail-risk" wx:if="{{currentIngredient.risk && currentIngredient.riskKeywords && currentIngredient.riskKeywords.length > 0}}">
+            <text class="risk-title">⚠️ 风险提示：</text>
+            <text class="risk-content">
+              含有风险成分：{{currentIngredient.riskKeywords.join('、')}}
+            </text>
+            <view class="risk-tips">
+              <text class="tip-item" wx:if="{{currentIngredient.isHighRisk}}">• ⚠️ 高风险成分，请谨慎食用！</text>
+              <text class="tip-item">• 建议减少食用频率</text>
+              <text class="tip-item">• 儿童、孕妇等人群慎用</text>
+              <text class="tip-item">• 长期过量摄入可能影响健康</text>
+            </view>
+          </view>
+          
+          <!-- 过敏原提示 -->
+          <view class="detail-allergen" wx:if="{{isAllergen({name: currentIngredient.name})}}">
+            <text class="allergen-title">⚠️ 过敏原提示：</text>
+            <text class="allergen-content">
+              此成分可能是过敏原
+            </text>
+            <view class="allergen-tips">
+              <text class="tip-item">• 如果您对该成分过敏，请避免食用</text>
+              <text class="tip-item">• 注意查看食品标签上的过敏原提示</text>
+              <text class="tip-item">• 首次食用前可先尝试少量</text>
+            </view>
+          </view>
+          
+          <!-- 安全说明 -->
+          <view class="detail-info" wx:if="{{!currentIngredient.risk && !isAllergen({name: currentIngredient.name})}}">
+            <text class="info-title">说明：</text>
+            <text class="info-content">
+              正常的食品成分，安全可食用
+            </text>
+          </view>
+          
+          <view class="detail-source">
+            <text class="source-text">数据来源：食品安全数据库</text>
+          </view>
+        </view>
+      </scroll-view>
+      <view class="modal-footer">
+        <button class="modal-btn" bindtap="closeIngredientModal">我知道了</button>
+      </view>
+    </view>
+  </view>
+</view>
+
+
+<!-- 冰箱添加弹窗 -->
+<view class="fridge-modal" wx:if="{{showAddToFridgeModal}}">
+  <view class="modal-mask" bindtap="closeFridgeModal"></view>
+  <view class="modal-content fridge-content">
+    <view class="modal-header">
+      <text class="modal-title">添加到我的冰箱</text>
+      <icon 
+        type="cancel" 
+        size="20" 
+        color="#95a5a6" 
+        bindtap="closeFridgeModal"
+      />
+    </view>
+    
+    <scroll-view class="modal-body" scroll-y>
+      <!-- 商品信息 -->
+      <view class="fridge-product-info">
+        <image 
+          class="product-image" 
+          src="{{product.image || '/assets/images/default-food.png'}}" 
+          mode="aspectFill"
+        />
+        <text class="product-name">{{product.name}}</text>
+      </view>
+      
+      <!-- 保质期建议 -->
+      <view class="shelf-life-suggestions" wx:if="{{shelfLifeSuggestions && shelfLifeSuggestions.length > 0}}">
+        <view class="suggestions-header">
+          <icon type="info" size="16" color="#3498db" />
+          <text class="suggestions-title">保质期建议</text>
+        </view>
+        <view class="suggestions-list">
+          <block wx:for="{{shelfLifeSuggestions}}" wx:key="index">
+            <view class="suggestion-item">
+              <text class="suggestion-text">{{item}}</text>
+            </view>
+          </block>
+        </view>
+      </view>
+      
+      <!-- 表单 -->
+      <!-- 修改冰箱弹窗中的图标 -->
+      <view class="fridge-form">
+        <!-- 购买日期 -->
+        <view class="form-item">
+          <text class="form-label">购买日期</text>
+          <view class="form-input-container">
+            <view 
+              class="form-input {{fridgeForm.purchaseDate ? 'has-value' : ''}}" 
+              bindtap="showDatePicker" 
+              data-field="purchaseDate">
+              {{fridgeForm.purchaseDate || '请选择购买日期'}}
+              <icon type="date" size="16" color="#999" />
+            </view>
+            <view wx:if="{{fridgeForm.purchaseDate}}" class="form-input-clear" bindtap="clearDate" data-field="purchaseDate">
+              <icon type="clear" size="16" color="#999" />
+            </view>
+          </view>
+        </view>
+  
+        <!-- 过期日期 -->
+        <view class="form-item required">
+          <text class="form-label">过期日期</text>
+          <view class="form-input-container">
+            <view 
+              class="form-input {{fridgeForm.expiryDate ? 'has-value' : ''}}" 
+              bindtap="showDatePicker" 
+              data-field="expiryDate">
+              {{fridgeForm.expiryDate || '请选择过期日期'}}
+              <icon type="date" size="16" color="#999" />
+            </view>
+            <view wx:if="{{fridgeForm.expiryDate}}" class="form-input-clear" bindtap="clearDate" data-field="expiryDate">
+              <icon type="clear" size="16" color="#999" />
+            </view>
+          </view>
+        </view>
+        
+        <!-- 日期信息 -->
+        <view class="date-info" wx:if="{{fridgeForm.expiryDate && fridgeForm.purchaseDate}}">
+          <text class="date-text">
+            <icon type="info" size="14" color="#3498db" />
+            保存时间：{{calculateDaysBetween(fridgeForm.purchaseDate, fridgeForm.expiryDate)}}天
+          </text>
+        </view>
+        
+        <!-- 过期警告 -->
+        <view class="warning-info" wx:if="{{fridgeForm.expiryDate && isDateExpired(fridgeForm.expiryDate)}}">
+          <text class="warning-text">
+            <icon type="warn" size="14" color="#e74c3c" />
+            注意：此日期已过期
+          </text>
+        </view>
+      </view>
+    </scroll-view>
+    
+    <view class="modal-footer">
+      <button class="modal-btn cancel" bindtap="closeFridgeModal">取消</button>
+      <button 
+        class="modal-btn confirm {{fridgeLoading ? 'loading' : ''}}" 
+        bindtap="saveToFridge" 
+        disabled="{{fridgeLoading}}"
+      >
+        <text wx:if="{{fridgeLoading}}" class="loading-spinner"></text>
+        {{fridgeLoading ? '添加中...' : '确认添加'}}
+      </button>
+    </view>
+  </view>
+</view>
+
+<!-- 日期选择器弹窗 -->
+<view class="date-picker-modal" wx:if="{{datePickerVisible}}">
+  <view class="modal-mask" bindtap="closeDatePicker"></view>
+  <view class="modal-content date-picker-content">
+    <view class="modal-header">
+      <text class="modal-title">{{datePickerTitle}}</text>
+      <icon 
+        type="cancel" 
+        size="20" 
+        color="#95a5a6" 
+        bindtap="closeDatePicker"
+      />
+    </view>
+    
+    <view class="modal-body">
+      <!-- 快速设置按钮 -->
+      <view class="quick-date-buttons">
+        <view class="quick-date-row">
+          <button class="quick-date-btn" bindtap="quickSetDate" data-type="today">今天</button>
+          <button class="quick-date-btn" bindtap="quickSetDate" data-type="tomorrow">明天</button>
+          <button class="quick-date-btn" bindtap="quickSetDate" data-type="3days">3天后</button>
+        </view>
+        <view class="quick-date-row">
+          <button class="quick-date-btn" bindtap="quickSetDate" data-type="week">一周后</button>
+          <button class="quick-date-btn" bindtap="quickSetDate" data-type="month">一月后</button>
+        </view>
+      </view>
+      
+      <!-- 日期选择器 -->
+      <picker 
+        mode="date" 
+        value="{{datePickerValue}}" 
+        start="{{minDate}}" 
+        end="{{maxDate}}"
+        bindchange="onDatePickerChange"
+        class="date-picker"
+      >
+        <view class="date-picker-display">
+          <text class="selected-date">{{datePickerValue || '请选择日期'}}</text>
+          <text class="iconfont icon-arrow-down"></text>
+        </view>
+      </picker>
+      
+      <!-- 日期预览 -->
+      <view class="date-preview" wx:if="{{datePickerValue}}">
+        <text class="preview-text">{{formatDateDisplay(datePickerValue)}}</text>
+      </view>
+    </view>
+    
+    <view class="modal-footer">
+      <button class="modal-btn cancel" bindtap="closeDatePicker">取消</button>
+      <button class="modal-btn confirm" bindtap="confirmDatePicker">确定</button>
+    </view>
+  </view>
+</view>

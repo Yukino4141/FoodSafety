@@ -1,0 +1,349 @@
+<view class="ai-analyze-container">
+  <!-- 顶部标题 -->
+  <view class="header">
+    <text class="title">AI健康分析</text>
+    <text class="subtitle">上传配料表照片或手动输入配料</text>
+  </view>
+
+  <!-- 切换标签 -->
+  <view class="tabs">
+    <view 
+      class="tab-item {{activeTab === 'manual' ? 'active' : ''}}"
+      bindtap="switchTab"
+      data-tab="manual"
+    >
+      <text>手动输入</text>
+    </view>
+    <view 
+      class="tab-item {{activeTab === 'camera' ? 'active' : ''}}"
+      bindtap="switchTab"
+      data-tab="camera"
+    >
+      <text>拍照识别</text>
+    </view>
+    <view 
+      class="tab-item {{activeTab === 'album' ? 'active' : ''}}"
+      bindtap="switchTab"
+      data-tab="album"
+    >
+      <text>相册选择</text>
+    </view>
+  </view>
+
+  <!-- 手动输入模式 -->
+  <view wx:if="{{activeTab === 'manual'}}" class="manual-input">
+    <!-- 配料输入区域 -->
+    <view class="input-section">
+      <view class="section-title">
+        <text>配料列表</text>
+        <text class="hint">(每行一个配料，支持中文英文)</text>
+      </view>
+      <textarea 
+        class="ingredients-input"
+        placeholder="例如：&#10;水&#10;白砂糖&#10;植脂末&#10;代可可脂&#10;..."
+        value="{{ingredientsText}}"
+        bindinput="onIngredientsInput"
+        maxlength="1000"
+        auto-height
+      />
+      <view class="input-count">
+        <text>{{ingredientsText.length}}/1000</text>
+      </view>
+    </view>
+
+    <!-- 目标用户选择 -->
+    <view class="input-section">
+      <view class="section-title">
+        <text>为谁分析</text>
+      </view>
+      <view class="target-grid">
+        <view 
+          class="target-item {{targetUser === 'common' ? 'selected' : ''}}"
+          bindtap="selectTargetUser"
+          data-user="common"
+        >
+          <text>普通成人</text>
+        </view>
+        <view 
+          class="target-item {{targetUser === 'child' ? 'selected' : ''}}"
+          bindtap="selectTargetUser"
+          data-user="child"
+        >
+          <text>儿童</text>
+        </view>
+        <view 
+          class="target-item {{targetUser === 'elder' ? 'selected' : ''}}"
+          bindtap="selectTargetUser"
+          data-user="elder"
+        >
+          <text>老人</text>
+        </view>
+        <view 
+          class="target-item {{targetUser === 'pregnant' ? 'selected' : ''}}"
+          bindtap="selectTargetUser"
+          data-user="pregnant"
+        >
+          <text>孕妇</text>
+        </view>
+        <view 
+          class="target-item {{targetUser === 'allergy' ? 'selected' : ''}}"
+          bindtap="selectTargetUser"
+          data-user="allergy"
+        >
+          <text>过敏体质</text>
+        </view>
+        <view 
+          class="target-item {{targetUser === 'health' ? 'selected' : ''}}"
+          bindtap="selectTargetUser"
+          data-user="health"
+        >
+          <text>健身人士</text>
+        </view>
+      </view>
+    </view>
+
+    <!-- 自定义输入 -->
+    <view class="input-section">
+      <view class="section-title">
+        <text>自定义描述（可选）</text>
+      </view>
+      <input 
+        class="custom-input"
+        placeholder="例如：我有高血压/糖尿病..."
+        value="{{customDesc}}"
+        bindinput="onCustomDescInput"
+      />
+    </view>
+  </view>
+
+  <!-- 拍照/相册模式 -->
+  <view wx:if="{{activeTab !== 'manual'}}" class="photo-mode">
+    <!-- 已选择的图片 -->
+    <view wx:if="{{selectedImage}}" class="selected-image-container">
+      <image 
+        class="selected-image" 
+        src="{{selectedImage}}" 
+        mode="aspectFit"
+        bindtap="previewImage"
+      />
+      <view class="image-actions">
+        <button class="btn retake-btn" bindtap="clearImage">
+          <text>重选</text>
+        </button>
+        <button class="btn analyze-btn" bindtap="analyzeFromImage">
+          <text>开始分析</text>
+        </button>
+      </view>
+    </view>
+
+    <!-- 选择图片按钮 -->
+    <view wx:else class="select-image-container">
+      <view class="upload-area" bindtap="selectImage">
+        <view class="upload-icon">
+          <image 
+            src="/assets/icons/camera.png" 
+            style="width: 60rpx; height: 60rpx;"
+          />
+        </view>
+        <text class="upload-text">
+          {{activeTab === 'camera' ? '点击拍照' : '点击选择相册图片'}}
+        </text>
+        <text class="upload-hint">支持识别中文配料表照片</text>
+      </view>
+    </view>
+
+    <!-- OCR识别结果预览 -->
+    <view wx:if="{{ocrResult}}" class="ocr-preview">
+      <view class="section-title">
+        <text>识别结果</text>
+        <button class="edit-btn" size="mini" bindtap="editOCRResult">
+          <text>编辑</text>
+        </button>
+      </view>
+      <view class="ocr-content">
+        <text>{{ocrResult}}</text>
+      </view>
+    </view>
+  </view>
+
+  <!-- 分析按钮 -->
+  <view class="action-bar" wx:if="{{activeTab === 'manual' || ocrResult}}">
+    <button 
+      class="analyze-btn-main" 
+      bindtap="startAnalysis"
+      loading="{{analyzing}}"
+      disabled="{{analyzing}}"
+    >
+      <text wx:if="{{!analyzing}}">开始AI分析</text>
+      <text wx:else>分析中...</text>
+    </button>
+  </view>
+
+  <!-- 历史记录 -->
+  <view class="history-section" wx:if="{{history.length > 0}}">
+    <view class="section-header">
+      <text class="section-title">最近分析</text>
+      <text class="clear-btn" bindtap="clearHistory">清空</text>
+    </view>
+    <view class="history-list">
+      <view 
+        class="history-item" 
+        wx:for="{{history}}" 
+        wx:key="id"
+        bindtap="viewHistoryDetail"
+        data-index="{{index}}"
+      >
+        <view class="history-content">
+          <view class="history-header">
+            <text class="history-title">{{item.targetUser}} - {{item.score}}分</text>
+            <text class="history-time">{{item.time}}</text>
+          </view>
+          <text class="history-desc">{{item.summary}}</text>
+          <view class="history-tags">
+            <view 
+              class="tag {{tag.class}}" 
+              wx:for="{{item.tags}}" 
+              wx:key="index"
+            >
+              <text>{{tag.text}}</text>
+            </view>
+          </view>
+        </view>
+        <view class="history-arrow">›</view>
+      </view>
+    </view>
+  </view>
+
+  <!-- 使用说明 -->
+  <view class="instructions">
+    <view class="instructions-title">
+      <text>使用说明</text>
+    </view>
+    <view class="instruction-item">
+      <text class="num">1</text>
+      <text class="text">手动输入：直接在文本框中输入配料，每行一个</text>
+    </view>
+    <view class="instruction-item">
+      <text class="num">2</text>
+      <text class="text">拍照识别：对准商品配料表拍照，AI会自动识别文字</text>
+    </view>
+    <view class="instruction-item">
+      <text class="num">3</text>
+      <text class="text">选择分析对象：根据不同人群，AI会给出针对性建议</text>
+    </view>
+    <view class="instruction-item">
+      <text class="num">4</text>
+      <text class="text">结果解读：分数越高越安全，红色表示高风险</text>
+    </view>
+  </view>
+</view>
+
+<!-- 分析结果弹窗 -->
+<view class="modal-overlay" wx:if="{{showResult}}">
+  <view class="result-modal">
+    <!-- 关闭按钮 -->
+    <view class="modal-header">
+      <text class="modal-title">AI分析结果</text>
+      <view class="close-btn" bindtap="closeResult">
+        <text>×</text>
+      </view>
+    </view>
+
+    <!-- 评分 -->
+    <view class="score-section">
+      <view class="score-circle" style="border-color: {{result.color}}">
+        <text class="score-value">{{result.score}}</text>
+        <text class="score-label">分</text>
+      </view>
+      <view class="score-info">
+        <text class="score-title" style="color: {{result.color}}">
+          {{result.summary}}
+        </text>
+        <text class="score-subtitle">适合{{result.targetUser}}食用</text>
+      </view>
+    </view>
+
+    <!-- 风险等级 -->
+    <view class="risk-section">
+      <view class="risk-level">
+        <text class="risk-label">风险等级：</text>
+        <view class="risk-badge" style="background-color: {{result.color}}">
+          <text>{{result.riskLevelText}}</text>
+        </view>
+      </view>
+      <view class="risk-meter">
+        <view class="meter-track">
+          <view 
+            class="meter-fill" 
+            style="width: {{result.riskPercent}}%; background-color: {{result.color}}"
+          ></view>
+        </view>
+        <view class="meter-labels">
+          <text>安全</text>
+          <text>注意</text>
+          <text>警告</text>
+          <text>危险</text>
+        </view>
+      </view>
+    </view>
+
+    <!-- 配料分析 -->
+    <view class="ingredients-section" wx:if="{{result.ingredients && result.ingredients.length > 0}}">
+      <view class="section-title">
+        <text>配料分析</text>
+      </view>
+      <view class="ingredients-list">
+        <view 
+          class="ingredient-item {{item.riskLevel > 1 ? 'danger' : item.riskLevel === 1 ? 'warning' : 'safe'}}" 
+          wx:for="{{result.ingredients}}" 
+          wx:key="name"
+        >
+          <view class="ingredient-info">
+            <text class="ingredient-name">{{item.name}}</text>
+            <text class="ingredient-desc">{{item.desc}}</text>
+          </view>
+          <view class="ingredient-risk">
+            <text class="risk-tag">{{item.riskText}}</text>
+          </view>
+        </view>
+      </view>
+    </view>
+
+    <!-- AI建议 -->
+    <view class="suggestion-section">
+      <view class="section-title">
+        <text>AI健康建议</text>
+      </view>
+      <view class="suggestion-content">
+        <text>{{result.suggestion}}</text>
+      </view>
+    </view>
+
+    <!-- 详细建议 -->
+    <view class="detail-section" wx:if="{{result.details && result.details.length > 0}}">
+      <view class="section-title">
+        <text>详细建议</text>
+      </view>
+      <view class="detail-list">
+        <view 
+          class="detail-item" 
+          wx:for="{{result.details}}" 
+          wx:key="index"
+        >
+          <text class="detail-num">{{index + 1}}.</text>
+-           <text class="detail-text">{{item}}</text>
+        </view>
+      </view>
+    </view>
+
+    <!-- 操作按钮 -->
+    <view class="modal-actions">
+      <button class="btn secondary-btn" bindtap="saveResult">
+        <text>保存结果</text>
+      </button>
+      <button class="btn primary-btn" bindtap="shareResult" open-type="share">
+        <text>分享给朋友</text>
+      </button>
+    </view>
+  </view>
+</view>

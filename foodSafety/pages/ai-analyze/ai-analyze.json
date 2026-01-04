@@ -1,0 +1,7 @@
+{
+  "usingComponents": {},
+  "navigationBarTitleText": "AI健康分析",
+  "navigationBarBackgroundColor": "#1abc9c",
+  "navigationBarTextStyle": "white",
+  "enablePullDownRefresh": false
+}

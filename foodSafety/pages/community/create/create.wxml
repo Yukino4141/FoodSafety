@@ -1,0 +1,98 @@
+<!-- pages/community/create/create.wxml -->
+<view class="create-page">
+  <!-- 头部 -->
+  <view class="create-header">
+    <text class="header-title">发布内容</text>
+    <button 
+      class="submit-btn" 
+      bindtap="submitPost"
+      disabled="{{submitting}}"
+    >
+      {{submitting ? '发布中...' : '发布'}}
+    </button>
+  </view>
+
+  <!-- 表单内容 -->
+  <scroll-view class="form-content" scroll-y>
+    <!-- 标题 -->
+    <view class="form-section">
+      <view class="section-header">
+        <text class="section-title">标题（可选）</text>
+        <text class="char-count">{{titleLength}}/{{titleMaxLength}}</text>
+      </view>
+      <input 
+        class="title-input" 
+        placeholder="输入标题，更容易被发现..."
+        value="{{formData.title}}"
+        maxlength="{{titleMaxLength}}"
+        bindinput="onTitleInput"
+      />
+    </view>
+
+    <!-- 内容 -->
+    <view class="form-section">
+      <view class="section-header">
+        <text class="section-title">内容</text>
+        <text class="char-count">{{contentLength}}/{{contentMaxLength}}</text>
+      </view>
+      <textarea 
+        class="content-input" 
+        placeholder="分享你的食品安全经验... (支持#话题标签#)"
+        value="{{formData.content}}"
+        maxlength="{{contentMaxLength}}"
+        bindinput="onContentInput"
+        auto-height
+      />
+    </view>
+
+    <!-- 图片上传 -->
+    <view class="form-section">
+      <view class="section-header">
+        <text class="section-title">图片（可选）</text>
+        <text class="image-count">{{formData.images.length}}/9</text>
+      </view>
+      <view class="image-uploader">
+        <!-- 已上传的图片 -->
+        <block wx:for="{{formData.images}}" wx:key="index">
+          <view class="image-preview">
+            <image 
+              class="preview-image" 
+              src="{{item}}" 
+              mode="aspectFill"
+              data-index="{{index}}"
+              bindtap="previewImage"
+            />
+            <view 
+              class="delete-image" 
+              data-index="{{index}}"
+              bindtap="removeImage"
+            >
+              <icon type="cancel" size="16" color="#fff" />
+            </view>
+          </view>
+        </block>
+
+        <!-- 上传按钮 -->
+        <view 
+          class="upload-btn" 
+          bindtap="chooseImages"
+          wx:if="{{formData.images.length < 9}}"
+        >
+          <icon type="add" size="30" color="#bdc3c7" />
+          <text class="upload-text">添加图片</text>
+        </view>
+      </view>
+    </view>
+
+    <!-- 发布提示 -->
+    <view class="publish-tips">
+      <text class="tips-title">💡 发布提示</text>
+      <text class="tips-content">
+        • 请分享真实的食品安全经验\n
+        • 避免发布广告或虚假信息\n
+        • 使用#话题标签#更容易被发现\n
+        • 优质内容会获得更多推荐
+      </text>
+    </view>
+  </scroll-view>
+</view>

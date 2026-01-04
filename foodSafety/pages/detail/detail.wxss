@@ -1,0 +1,1185 @@
+/* pages/detail/detail.wxss */
+
+/* 页面基础样式 */
+.detail-page {
+  min-height: 100vh;
+  background-color: #f5f5f5;
+}
+
+/* 自定义导航栏 */
+.custom-nav {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 1000;
+  background: linear-gradient(135deg, #2ecc71, #27ae60);
+  display: flex;
+  align-items: center;
+  padding-bottom: 12px;
+  box-shadow: 0 2px 10px rgba(46, 204, 113, 0.1);
+}
+
+.nav-left {
+  padding: 0 15px;
+}
+
+.nav-title {
+  flex: 1;
+  text-align: center;
+  color: white;
+  font-size: 18px;
+  font-weight: 600;
+}
+
+.nav-right {
+  display: flex;
+  padding-right: 15px;
+}
+
+.nav-icon {
+  padding: 5px;
+  margin-left: 10px;
+}
+
+/* 滚动内容区域 */
+.scroll-content {
+  height: 100vh;
+  padding-top: 90rpx;
+  padding-bottom: 140rpx;
+}
+
+/* 商品卡片 */
+.product-card {
+  background: white;
+  margin: 20rpx;
+  border-radius: 16rpx;
+  overflow: hidden;
+  box-shadow: 0 4rpx 20rpx rgba(0, 0, 0, 0.08);
+}
+
+.product-image-container {
+  position: relative;
+  width: 100%;
+  height: 400rpx;
+}
+
+.product-image {
+  width: 100%;
+  height: 100%;
+}
+
+.safety-badge {
+  position: absolute;
+  top: 20rpx;
+  right: 20rpx;
+  padding: 8rpx 20rpx;
+  border-radius: 30rpx;
+  font-size: 24rpx;
+  font-weight: 600;
+  color: white;
+}
+
+.safety-badge.safe {
+  background: #2ecc71;
+}
+
+.safety-badge.risk {
+  background: #e74c3c;
+}
+
+.product-info {
+  padding: 30rpx;
+}
+
+.product-name {
+  font-size: 36rpx;
+  font-weight: 600;
+  color: #333;
+  margin-bottom: 20rpx;
+  line-height: 1.4;
+}
+
+.product-meta {
+  background: #f8f9fa;
+  padding: 20rpx;
+  border-radius: 12rpx;
+  margin-bottom: 20rpx;
+}
+
+.meta-item {
+  display: flex;
+  align-items: center;
+  margin-bottom: 10rpx;
+  font-size: 26rpx;
+  color: #666;
+}
+
+.meta-item:last-child {
+  margin-bottom: 0;
+}
+
+.meta-item icon {
+  margin-right: 10rpx;
+}
+
+.copy-btn {
+  margin-left: 20rpx;
+  color: #2ecc71;
+  font-size: 24rpx;
+}
+
+.risk-warning {
+  background: #ffeaea;
+  border: 1rpx solid #ffcccc;
+  border-radius: 12rpx;
+  padding: 20rpx;
+  display: flex;
+  align-items: flex-start;
+  margin-top: 20rpx;
+}
+
+.risk-warning icon {
+  margin-right: 10rpx;
+  margin-top: 2rpx;
+}
+
+.warning-text {
+  flex: 1;
+  font-size: 26rpx;
+  color: #e74c3c;
+  line-height: 1.4;
+}
+
+/* 区域卡片 */
+.section-card {
+  background: white;
+  margin: 20rpx;
+  border-radius: 16rpx;
+  padding: 30rpx;
+  box-shadow: 0 4rpx 20rpx rgba(0, 0, 0, 0.08);
+}
+
+.section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 30rpx;
+  padding-bottom: 20rpx;
+  border-bottom: 1rpx solid #eee;
+}
+
+.section-title-line {
+  display: flex;
+  align-items: center;
+}
+
+.section-title {
+  font-size: 32rpx;
+  font-weight: 600;
+  color: #333;
+  margin-left: 10rpx;
+}
+
+.section-count {
+  font-size: 26rpx;
+  color: #666;
+}
+
+/* 配料列表 */
+.ingredients-container {
+  max-height: 600rpx;
+  overflow-y: auto;
+}
+
+.ingredient-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20rpx 0;
+}
+
+.ingredient-main {
+  flex: 1;
+  display: flex;
+  align-items: center;
+}
+
+.ingredient-index {
+  font-size: 26rpx;
+  color: #999;
+  margin-right: 15rpx;
+  min-width: 40rpx;
+}
+
+.ingredient-name {
+  font-size: 28rpx;
+  color: #333;
+  flex: 1;
+}
+
+.ingredient-name.risk-name {
+  color: #e74c3c;
+  font-weight: 500;
+}
+
+.ingredient-tags {
+  display: flex;
+  align-items: center;
+}
+
+.ingredient-tag {
+  padding: 4rpx 12rpx;
+  border-radius: 6rpx;
+  font-size: 22rpx;
+  margin-right: 10rpx;
+}
+
+.ingredient-tag.safe-tag {
+  background: #e8f7ed;
+  color: #2ecc71;
+}
+
+.ingredient-tag.risk-tag {
+  background: #ffeaea;
+  color: #e74c3c;
+}
+
+.divider {
+  height: 1rpx;
+  background: #eee;
+  margin-left: 55rpx;
+}
+
+/* 空状态 */
+.empty-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 60rpx 0;
+}
+
+.empty-text {
+  margin-top: 20rpx;
+  font-size: 28rpx;
+  color: #999;
+}
+
+/* 信息网格 */
+.info-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 20rpx;
+}
+
+.info-item {
+  background: #f8f9fa;
+  border-radius: 12rpx;
+  padding: 20rpx;
+}
+
+.info-label {
+  display: block;
+  font-size: 24rpx;
+  color: #999;
+  margin-bottom: 8rpx;
+}
+
+.info-value {
+  font-size: 28rpx;
+  color: #333;
+  font-weight: 500;
+}
+
+.safety-level {
+  padding: 4rpx 12rpx;
+  border-radius: 6rpx;
+  font-size: 24rpx;
+}
+
+.safety-level.SAFE {
+  background: #e8f7ed;
+  color: #2ecc71;
+}
+
+.safety-level.RISK {
+  background: #ffeaea;
+  color: #e74c3c;
+}
+
+.safety-level.DANGER {
+  background: #fadbd8;
+  color: #c0392b;
+}
+
+/* 用户反馈 */
+.feedback-section {
+  background: white;
+  margin: 20rpx;
+  border-radius: 16rpx;
+  padding: 30rpx;
+  text-align: center;
+}
+
+.feedback-title {
+  display: block;
+  font-size: 30rpx;
+  color: #333;
+  margin-bottom: 30rpx;
+}
+
+.feedback-buttons {
+  display: flex;
+  justify-content: center;
+  gap: 20rpx;
+}
+
+.feedback-btn {
+  flex: 1;
+  padding: 20rpx;
+  border-radius: 12rpx;
+  font-size: 26rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  background: #f8f9fa;
+}
+
+.feedback-btn.accurate {
+  background: #e8f7ed;
+  color: #2ecc71;
+}
+
+.feedback-btn.inaccurate {
+  background: #ffeaea;
+  color: #e74c3c;
+}
+
+.feedback-btn.outdated {
+  background: #fff4e6;
+  color: #f39c12;
+}
+
+.feedback-btn icon {
+  margin-right: 8rpx;
+}
+
+/* 底部操作栏 */
+.action-bar {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: white;
+  display: flex;
+  padding: 20rpx;
+  border-top: 1rpx solid #eee;
+  z-index: 1000;
+}
+
+.action-btn {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 20rpx;
+  margin: 0 10rpx;
+  border-radius: 14rpx;
+  border: none;
+  font-size: 28rpx;
+}
+
+.action-btn.secondary {
+  background: #f8f9fa;
+  color: #666;
+}
+
+.action-btn.primary {
+  background: linear-gradient(135deg, #2ecc71, #27ae60);
+  color: white;
+  font-weight: 600;
+}
+
+.action-btn icon {
+  margin-bottom: 8rpx;
+}
+
+/* 加载状态 */
+.loading-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 2000;
+}
+
+.loading-content {
+  text-align: center;
+}
+
+.spinner {
+  width: 60rpx;
+  height: 60rpx;
+  border: 6rpx solid #f3f3f3;
+  border-top: 6rpx solid #2ecc71;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin: 0 auto 30rpx;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.loading-text {
+  font-size: 28rpx;
+  color: #666;
+}
+
+/* 错误状态 */
+.error-overlay {
+  position: fixed;
+  top: 90rpx;
+  left: 0;
+  right: 0;
+  bottom: 140rpx;
+  background: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.error-content {
+  text-align: center;
+  padding: 60rpx;
+}
+
+.error-text {
+  display: block;
+  font-size: 32rpx;
+  color: #e74c3c;
+  margin: 30rpx 0 40rpx;
+}
+
+.retry-btn {
+  background: #2ecc71;
+  color: white;
+  border: none;
+  padding: 20rpx 40rpx;
+  border-radius: 12rpx;
+  font-size: 28rpx;
+  margin: 10rpx;
+  display: inline-block;
+}
+
+/* 底部空白 */
+.bottom-space {
+  height: 40rpx;
+}
+
+/* 模态框 */
+.ingredient-modal .modal-mask {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: 3000;
+}
+
+.ingredient-modal .modal-content {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: white;
+  border-radius: 24rpx 24rpx 0 0;
+  z-index: 3001;
+  max-height: 80vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.ingredient-modal .modal-header {
+  padding: 30rpx;
+  border-bottom: 1rpx solid #eee;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.ingredient-modal .modal-title {
+  font-size: 34rpx;
+  font-weight: 600;
+  color: #333;
+}
+
+.ingredient-modal .modal-body {
+  flex: 1;
+  padding: 30rpx;
+}
+
+.ingredient-modal .modal-footer {
+  padding: 20rpx 30rpx 40rpx;
+}
+
+.ingredient-modal .modal-btn {
+  width: 100%;
+  background: linear-gradient(135deg, #2ecc71, #27ae60);
+  color: white;
+  border: none;
+  padding: 25rpx;
+  border-radius: 12rpx;
+  font-size: 30rpx;
+  font-weight: 600;
+}
+
+/* 配料详情 */
+.ingredient-detail .detail-name {
+  display: block;
+  font-size: 36rpx;
+  font-weight: 600;
+  color: #333;
+  margin-bottom: 30rpx;
+}
+
+.ingredient-detail .detail-tags {
+  margin-bottom: 40rpx;
+}
+
+.ingredient-detail .detail-tag {
+  display: inline-block;
+  padding: 8rpx 20rpx;
+  border-radius: 20rpx;
+  font-size: 26rpx;
+  margin-right: 15rpx;
+}
+
+.ingredient-detail .safe-tag {
+  background: #e8f7ed;
+  color: #2ecc71;
+}
+
+.ingredient-detail .risk-tag {
+  background: #ffeaea;
+  color: #e74c3c;
+}
+
+.ingredient-detail .risk-title {
+  display: block;
+  font-size: 30rpx;
+  color: #e74c3c;
+  margin-bottom: 15rpx;
+  font-weight: 600;
+}
+
+.ingredient-detail .risk-content {
+  display: block;
+  font-size: 28rpx;
+  color: #333;
+  line-height: 1.5;
+  margin-bottom: 30rpx;
+}
+
+.ingredient-detail .risk-tips {
+  background: #fff8f8;
+  border-radius: 12rpx;
+  padding: 20rpx;
+  margin-bottom: 40rpx;
+}
+
+.ingredient-detail .tip-item {
+  display: block;
+  font-size: 26rpx;
+  color: #666;
+  margin-bottom: 10rpx;
+  line-height: 1.4;
+}
+
+.ingredient-detail .tip-item:last-child {
+  margin-bottom: 0;
+}
+
+.ingredient-detail .info-title {
+  display: block;
+  font-size: 30rpx;
+  color: #333;
+  margin-bottom: 15rpx;
+  font-weight: 600;
+}
+
+.ingredient-detail .info-content {
+  display: block;
+  font-size: 28rpx;
+  color: #666;
+  line-height: 1.5;
+  margin-bottom: 40rpx;
+}
+
+.ingredient-detail .source-text {
+  display: block;
+  font-size: 24rpx;
+  color: #999;
+  text-align: center;
+  padding-top: 30rpx;
+  border-top: 1rpx solid #eee;
+}
+
+/* 个性化风险提示 */
+.personalized-warning {
+  background: linear-gradient(135deg, #fff3e0, #ffe0b2);
+  border: 2rpx solid #ffb74d;
+  border-radius: 16rpx;
+  padding: 25rpx;
+  margin: 25rpx 30rpx;
+  box-shadow: 0 4rpx 15rpx rgba(255, 167, 38, 0.1);
+  position: relative;
+}
+
+.personalized-warning:active {
+  background: linear-gradient(135deg, #ffe0b2, #ffcc80);
+  transform: scale(0.99);
+}
+
+.warning-header {
+  display: flex;
+  align-items: center;
+  margin-bottom: 15rpx;
+}
+
+.warning-icon {
+  font-size: 36rpx;
+  margin-right: 15rpx;
+}
+
+.warning-title {
+  font-size: 30rpx;
+  font-weight: bold;
+  color: #ff9800;
+}
+
+.warning-content {
+  font-size: 26rpx;
+  color: #f57c00;
+  line-height: 1.5;
+}
+
+.warning-text {
+  display: block;
+  margin-bottom: 10rpx;
+}
+
+.profile-source {
+  font-size: 24rpx;
+  color: #ffa726;
+  display: block;
+  margin-bottom: 10rpx;
+}
+
+.tap-hint {
+  font-size: 22rpx;
+  color: #ffa726;
+  opacity: 0.8;
+  display: block;
+  text-align: right;
+}
+
+/* 营养成分表 */
+.nutrition-container {
+  padding: 20rpx 0;
+}
+
+.nutrition-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20rpx 30rpx;
+}
+
+.nutrition-name {
+  flex: 1;
+}
+
+.nutrition-key {
+  font-size: 28rpx;
+  color: #333;
+  font-weight: 500;
+}
+
+.nutrition-value {
+  display: flex;
+  align-items: baseline;
+}
+
+.nutrition-amount {
+  font-size: 28rpx;
+  color: #3498db;
+  font-weight: 600;
+  margin-right: 10rpx;
+}
+
+.nutrition-unit {
+  font-size: 24rpx;
+  color: #7f8c8d;
+}
+
+/* 配料表更新 */
+.ingredient-name-container {
+  display: flex;
+  align-items: center;
+  flex: 1;
+}
+
+.allergen-name {
+  color: #e74c3c !important;
+  font-weight: 600;
+}
+
+.allergen-tag {
+  background: linear-gradient(135deg, #e74c3c, #c0392b);
+  color: white;
+  font-size: 20rpx;
+  padding: 4rpx 12rpx;
+  border-radius: 12rpx;
+  margin-left: 15rpx;
+  white-space: nowrap;
+}
+
+.risk-count {
+  color: #e74c3c;
+  font-weight: 600;
+}
+
+.high-risk-tag {
+  background: linear-gradient(135deg, #c0392b, #96281b);
+  color: white;
+  font-size: 22rpx;
+  padding: 6rpx 16rpx;
+  border-radius: 20rpx;
+}
+
+/* 检测信息更新 */
+.safety-level.safe {
+  color: #2ecc71;
+  font-weight: 600;
+}
+
+.safety-level.risk {
+  color: #e74c3c;
+  font-weight: 600;
+}
+
+.safety-level.danger {
+  color: #c0392b;
+  font-weight: 600;
+}
+
+.has-analysis {
+  color: #2ecc71;
+  font-weight: 500;
+}
+
+.no-analysis {
+  color: #95a5a6;
+}
+
+/* 底部操作栏更新 */
+.favorite-btn {
+  background: linear-gradient(135deg, #2ecc71, #27ae60);
+  color: white;
+}
+
+.favorite-btn.active {
+  background: linear-gradient(135deg, #f39c12, #e67e22);
+}
+
+.loading-dot {
+  font-size: 24rpx;
+  margin-left: 10rpx;
+  animation: loading-dot 1.5s infinite;
+}
+
+@keyframes loading-dot {
+  0%, 100% { opacity: 0.3; }
+  50% { opacity: 1; }
+}
+
+/* 弹窗中的过敏原提示 */
+.detail-allergen {
+  background: #ffebee;
+  border: 1rpx solid #ffcdd2;
+  border-radius: 12rpx;
+  padding: 20rpx;
+  margin-top: 25rpx;
+}
+
+.allergen-title {
+  display: block;
+  font-size: 26rpx;
+  font-weight: bold;
+  color: #e74c3c;
+  margin-bottom: 10rpx;
+}
+
+.allergen-content {
+  font-size: 24rpx;
+  color: #d32f2f;
+  line-height: 1.4;
+  display: block;
+  margin-bottom: 15rpx;
+}
+
+.allergen-tips {
+  font-size: 22rpx;
+  color: #d32f2f;
+  opacity: 0.9;
+}
+
+/* 商品图片点击效果 */
+.product-image:active {
+  opacity: 0.9;
+}
+
+/* 图标颜色 */
+icon[type="home"] {
+  color: #3498db !important;
+}
+
+icon[type="list"] {
+  color: #2ecc71 !important;
+}
+
+.icon[type="time"] {
+  color: #e67e22 !important;
+}
+
+/* 冰箱添加弹窗样式 */
+.fridge-modal .modal-content {
+  max-width: 90%;
+  max-height: 80vh;
+  border-radius: 20rpx;
+}
+
+.fridge-content .modal-body {
+  padding: 30rpx;
+}
+
+/* 商品信息 */
+.fridge-product-info {
+  display: flex;
+  align-items: center;
+  gap: 20rpx;
+  margin-bottom: 30rpx;
+}
+
+.fridge-product-info .product-image {
+  width: 100rpx;
+  height: 100rpx;
+  border-radius: 10rpx;
+}
+
+.fridge-product-info .product-name {
+  flex: 1;
+  font-size: 28rpx;
+  font-weight: 500;
+  color: #333;
+  line-height: 1.4;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+}
+
+/* 保质期建议 */
+.shelf-life-suggestions {
+  background: #f8f9fa;
+  border-radius: 12rpx;
+  padding: 20rpx;
+  margin-bottom: 30rpx;
+}
+
+.suggestions-header {
+  display: flex;
+  align-items: center;
+  gap: 10rpx;
+  margin-bottom: 15rpx;
+}
+
+.suggestions-title {
+  font-size: 26rpx;
+  font-weight: 500;
+  color: #3498db;
+}
+
+.suggestions-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10rpx;
+}
+
+.suggestion-item {
+  font-size: 24rpx;
+  color: #666;
+  line-height: 1.4;
+}
+
+/* 表单样式 */
+.fridge-form {
+  display: flex;
+  flex-direction: column;
+  gap: 25rpx;
+}
+
+.form-item {
+  display: flex;
+  flex-direction: column;
+  gap: 12rpx;
+}
+
+.form-label {
+  font-size: 26rpx;
+  color: #333;
+  font-weight: 500;
+}
+
+.form-label.required::after {
+  content: '*';
+  color: #e74c3c;
+  margin-left: 4rpx;
+}
+
+.form-input-container {
+  position: relative;
+}
+
+.form-input {
+  background: #f8f9fa;
+  border-radius: 12rpx;
+  padding: 22rpx 50rpx 22rpx 20rpx;
+  font-size: 26rpx;
+  color: #666;
+  border: 1rpx solid #e0e0e0;
+  transition: all 0.3s;
+}
+
+.form-input.has-value {
+  color: #333;
+  border-color: #4CAF50;
+}
+
+.form-input .iconfont {
+  position: absolute;
+  right: 20rpx;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #999;
+  font-size: 24rpx;
+}
+
+.form-input-clear {
+  position: absolute;
+  right: 50rpx;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 32rpx;
+  height: 32rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #999;
+}
+
+.form-input-clear .iconfont {
+  font-size: 20rpx;
+}
+
+/* 日期信息 */
+.date-info {
+  display: flex;
+  align-items: center;
+  gap: 8rpx;
+  background: rgba(76, 175, 80, 0.1);
+  border-radius: 8rpx;
+  padding: 16rpx;
+}
+
+.date-info .iconfont {
+  color: #4CAF50;
+  font-size: 24rpx;
+}
+
+.date-info .date-text {
+  font-size: 24rpx;
+  color: #4CAF50;
+}
+
+/* 警告信息 */
+.warning-info {
+  display: flex;
+  align-items: center;
+  gap: 8rpx;
+  background: rgba(231, 76, 60, 0.1);
+  border-radius: 8rpx;
+  padding: 16rpx;
+}
+
+.warning-info .iconfont {
+  color: #e74c3c;
+  font-size: 24rpx;
+}
+
+.warning-info .warning-text {
+  font-size: 24rpx;
+  color: #e74c3c;
+}
+
+/* 日期选择器弹窗 */
+.date-picker-modal .modal-content {
+  max-width: 80%;
+  max-height: 70vh;
+  border-radius: 20rpx;
+}
+
+.date-picker-content .modal-body {
+  padding: 30rpx;
+}
+
+/* 快速日期按钮 */
+.quick-date-buttons {
+  margin-bottom: 30rpx;
+}
+
+.quick-date-row {
+  display: flex;
+  gap: 15rpx;
+  margin-bottom: 15rpx;
+}
+
+.quick-date-btn {
+  flex: 1;
+  background: #f8f9fa;
+  border: 1rpx solid #e0e0e0;
+  border-radius: 8rpx;
+  padding: 16rpx 0;
+  font-size: 24rpx;
+  color: #666;
+  text-align: center;
+}
+
+.quick-date-btn::after {
+  border: none;
+}
+
+.quick-date-btn:active {
+  background: #e9ecef;
+}
+
+.quick-date-btn[data-type="today"] {
+  background: #4CAF50;
+  color: white;
+  border-color: #4CAF50;
+}
+
+/* 日期选择器显示 */
+.date-picker-display {
+  background: #f8f9fa;
+  border: 1rpx solid #e0e0e0;
+  border-radius: 8rpx;
+  padding: 22rpx 20rpx;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20rpx;
+}
+
+.selected-date {
+  font-size: 26rpx;
+  color: #333;
+}
+
+.date-picker-display .iconfont {
+  color: #999;
+  font-size: 24rpx;
+}
+
+/* 日期预览 */
+.date-preview {
+  text-align: center;
+  padding: 15rpx;
+  background: rgba(76, 175, 80, 0.1);
+  border-radius: 8rpx;
+}
+
+.preview-text {
+  font-size: 24rpx;
+  color: #4CAF50;
+}
+
+/* 加载按钮样式 */
+.loading-spinner {
+  display: inline-block;
+  width: 20rpx;
+  height: 20rpx;
+  border: 2rpx solid rgba(255, 255, 255, 0.3);
+  border-top-color: white;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+  margin-right: 8rpx;
+  vertical-align: middle;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.modal-btn.loading {
+  opacity: 0.8;
+}
+
+/* 在 detail.wxss 中添加或检查以下样式 */
+.fridge-modal {
+  position: fixed !important;
+  top: 0 !important;
+  left: 0 !important;
+  right: 0 !important;
+  bottom: 0 !important;
+  z-index: 9999 !important;
+  display: block !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+}
+
+.modal-mask {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: 10000;
+}
+
+.modal-content.fridge-content {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 600rpx;
+  background: white;
+  border-radius: 16rpx;
+  z-index: 10001;
+  padding: 40rpx;
+  box-sizing: border-box;
+}
+
