@@ -7,7 +7,7 @@ import lombok.Getter;
 @AllArgsConstructor
 public enum RiskLevel {
     SAFE(0, "安全"),
-    WARNING(1, "中风险/过敏原提醒"),
+    RISK(1, "中风险/过敏原提醒"),
     DANGER(2, "高风险/非法添加剂");
 
     private final Integer code;

@@ -1,0 +1,25 @@
+Merged v2.0 into feature/v2.0-B - conflict resolution notes
+
+- common/src/main/java/com/itheima/common/result/PageResult.java: unified generic PageResult with builder fields and kept a 2-arg constructor for old call sites.
+- server/src/main/java/com/itheima/server/mapper/ProductMapper.java: kept CRUD plus new queries (update/getByBarcode/getById/listByName/pageQuery).
+- server/src/main/resources/mapper/ProductMapper.xml: kept full insert columns (including nutrition/shelf life/manufacturer/ocr text) and added admin pageQuery filter.
+- server/src/main/java/com/itheima/server/service/impl/ScanHistoryServiceImpl.java: retained robust ingredient parsing + safety mapping and added getTodayScans implementation.
+- server/src/main/java/com/itheima/server/service/impl/UserProductServiceImpl.java: kept ingredient parsing into list for ProductVO to avoid string misuse.
+- server/src/main/java/com/itheima/server/service/AiService.java: combined OCR/analyze APIs with new analyzeIngredients entry point used by ProductService.
+- server/src/main/java/com/itheima/server/service/impl/AiServiceImpl.java: merged OCR/upload + AI chat analysis; new analyzeIngredients uses a risk prompt and parses JSON into AiAnalysisResult, while existing analyze/ocr behaviors remain.
+- server/src/main/resources/application-dev.yml: resolved to placeholder credentials (avoid committing secrets) while keeping ai/wechat sections.
+- foodSafety/project.private.config.json: kept newer libVersion 3.12.1 and condition block with existing settings.
+
+All above files were edited and staged to mark conflicts resolved.
+
+—— 追加说明（本次对话完成的合并与修复梳理，便于队员快速了解取舍）
+1) PageResult：采用 v2.0 的泛型+分页元数据方案，并保留旧版两参构造兼容老调用。
+2) ProductMapper/Mapper.xml：保留 CRUD、更新、按条码/ID/名称查询及管理端分页；插入字段包含营养信息、保质期、厂商、OCR 原文。
+3) ScanHistoryServiceImpl：保留配料解析成 List + 安全状态映射，补充 getTodayScans 实现；已修复缺失右括号导致的语法错误。
+4) UserProductServiceImpl：沿用配料解析为列表，避免把字符串直接塞给 VO。
+5) AiService 接口+A iServiceImpl：合并 OCR、分析与 analyzeIngredients，AI 调用统一走配置；修复 AliOssUtil.upload 调用参数不匹配问题（现直接传 MultipartFile），解析失败时给出低风险兜底。
+6) ProductServiceImpl：修复配料字段被 set 成字符串的问题，改为解析成 List；支持 JSON 数组或逗号分隔。
+7) application-dev.yml：用占位符替换敏感信息，保留 wechat/ai 配置节点。
+8) 小程序 project.private.config.json：选择 libVersion 3.12.1 并保留 condition。
+
+注意：尚未完整跑通编译/测试，请在本地再执行一次 mvn test 或 mvn compile 确认是否还有遗漏错误。

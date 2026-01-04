@@ -59,4 +59,10 @@ food-safety:
     ocr-url: ${food-safety.ai.ocr-url}
     ocr-app-code: ${food-safety.ai.ocr-app-code}
 
-
+# PageHelper配置
+pagehelper:
+  helper-dialect: mysql
+  reasonable: true
+  support-methods-arguments: true
+  params: count=countSql
+  auto-runtime-dialect: true

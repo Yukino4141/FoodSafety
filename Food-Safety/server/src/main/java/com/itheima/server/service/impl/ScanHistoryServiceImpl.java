@@ -124,7 +124,6 @@ public class ScanHistoryServiceImpl implements ScanHistoryService {
 
         return productVO;
     }
-
     private List<String> parseIngredientList(String raw) {
         if (raw == null || raw.isEmpty()) {
             return null;
@@ -145,5 +144,15 @@ public class ScanHistoryServiceImpl implements ScanHistoryService {
                 .map(s -> s.replaceAll("^\\[?\\\"?", "").replaceAll("\\\"?\\]?$", ""))
                 .filter(s -> !s.isEmpty())
                 .collect(Collectors.toList());
+
+    }
+
+    /**
+     * 获取今日扫码数
+     * @return 今日扫码数
+     */
+    @Override
+    public Integer getTodayScans() {
+        return scanHistoryMapper.getTodayScans();
     }
 }

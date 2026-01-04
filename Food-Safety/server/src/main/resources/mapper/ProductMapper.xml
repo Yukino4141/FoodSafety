@@ -6,8 +6,8 @@
     <!-- 插入商品 -->
     <insert id="insert" useGeneratedKeys="true" keyProperty="id">
         INSERT INTO product (barcode, name, image, json_ingredients, risk_level, risk_msg,
-                             nutrition_info, shelf_life, manufacturer, ocr_raw_text,
-                             create_user, create_time, update_time)
+                     nutrition_info, shelf_life, manufacturer, ocr_raw_text,
+                     create_user, create_time, update_time)
         VALUES (#{barcode}, #{name}, #{image}, #{jsonIngredients}, #{riskLevel}, #{riskMsg},
                 #{nutritionInfo}, #{shelfLife}, #{manufacturer}, #{ocrRawText},
                 #{createUser}, #{createTime}, #{updateTime})
@@ -51,7 +51,18 @@
         WHERE name LIKE CONCAT('%', #{name}, '%')
         ORDER BY update_time DESC
     </select>
-
-
+    <!-- 查询商品（管理端商品列表） -->
+    <select id="pageQuery" resultType="com.itheima.pojo.entity.Product">
+        SELECT * FROM product
+        <where>
+            <if test="name != null and name != ''">
+                AND name LIKE CONCAT('%', #{name}, '%')
+            </if>
+            <if test="barcode != null and barcode != ''">
+                AND barcode = #{barcode}
+            </if>
+        </where>
+        ORDER BY update_time DESC
+    </select>
 
 </mapper>

@@ -1,0 +1,62 @@
+/* product.css - 从 product.html 中抽出的样式，保持原样以确保不改变 UI */
+body {
+  background-color: #f8f9fa;
+}
+.navbar {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+}
+.sidebar {
+  background: white;
+  min-height: calc(100vh - 56px);
+  box-shadow: 0 0 10px rgba(0,0,0,0.1);
+}
+.sidebar .nav-link {
+  color: #333;
+  padding: 12px 20px;
+  border-left: 4px solid transparent;
+}
+.sidebar .nav-link:hover {
+  background-color: #f8f9fa;
+}
+.sidebar .nav-link.active {
+  background-color: #e9ecef;
+  border-left-color: #667eea;
+  color: #667eea;
+}
+.content-header {
+  background: white;
+  padding: 20px;
+  margin-bottom: 20px;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+.risk-badge {
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 12px;
+}
+.risk-safe {
+  background-color: #d4edda;
+  color: #155724;
+}
+.risk-danger {
+  background-color: #f8d7da;
+  color: #721c24;
+}
+.table-container {
+  background: white;
+  padding: 20px;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+/* Image preview sizing used in modal */
+#imgPreview {
+  width:150px;
+  height:150px;
+  border:1px dashed #ccc;
+  border-radius:8px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  margin:10px 0;
+}

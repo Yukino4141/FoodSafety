@@ -37,4 +37,11 @@ public interface UserMapper {
      * @param user 用户实体
      */
     void update(User user);
+    
+    /**
+     * 获取总用户数
+     * @return 总用户数
+     */
+    @Select("SELECT COUNT(*) FROM user")
+    Integer getTotalUsers();
 }

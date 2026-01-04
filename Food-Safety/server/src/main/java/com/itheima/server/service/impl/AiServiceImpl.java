@@ -5,6 +5,7 @@ import com.alibaba.fastjson.JSONObject;
 import com.itheima.common.properties.AiProperties;
 import com.itheima.common.untils.AliOssUtil;
 import com.itheima.pojo.dto.AiAnalyzeDTO;
+import com.itheima.pojo.dto.AiAnalysisResult;
 import com.itheima.pojo.vo.AiAnalyzeVO;
 import com.itheima.pojo.vo.OcrResultVO;
 import com.itheima.server.service.AiService;
@@ -17,6 +18,7 @@ import org.apache.http.impl.client.HttpClients;
 import org.apache.http.util.EntityUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.util.StringUtils;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.nio.charset.StandardCharsets;
@@ -25,7 +27,6 @@ import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
-import java.util.Base64;
 
 @Service
 @Slf4j
@@ -42,13 +43,9 @@ public class AiServiceImpl implements AiService {
     @Override
     public OcrResultVO ocr(MultipartFile file) {
         try {
-            String suffix = Optional.ofNullable(file.getOriginalFilename())
-                    .filter(name -> name.contains("."))
-                    .map(name -> name.substring(name.lastIndexOf('.')))
-                    .orElse(".jpg");
-            String objectName = String.format("ai/ocr/%s/%s%s", LocalDate.now(), UUID.randomUUID(), suffix);
             byte[] bytes = file.getBytes();
-            String imageUrl = aliOssUtil.upload(bytes, objectName);
+            // 直接复用已有上传工具，避免方法签名不匹配
+            String imageUrl = aliOssUtil.upload(file);
 
             String rawText = callAliyunOcr(bytes, imageUrl);
             List<String> ingredients = extractIngredients(rawText);
@@ -69,6 +66,13 @@ public class AiServiceImpl implements AiService {
         String prompt = buildAnalyzePrompt(dto);
         String content = callChatModel(prompt);
         return parseAnalyzeResult(content);
+    }
+
+    @Override
+    public AiAnalysisResult analyzeIngredients(String ingredients) {
+        String prompt = buildRiskPrompt(ingredients);
+        String content = callChatModel(prompt);
+        return parseAiAnalysisResult(content);
     }
 
     private List<String> extractIngredients(String rawText) {
@@ -98,21 +102,29 @@ public class AiServiceImpl implements AiService {
         String ingredients = dto.getIngredients() == null ? "" : String.join(",", dto.getIngredients());
         String target = dto.getTargetUser() == null ? "默认人群" : dto.getTargetUser();
         return "你是一名食品安全与营养分析助手，只能输出 JSON 对象。" +
-            "输入信息: 配料列表=[" + ingredients + "], 食用人群=" + target + "。" +
-            "请务必直接返回以下字段的 JSON，对应中文含义无需再解释：" +
-            "score: 0-100 的整数; " +
-            "riskLevel: 风险等级，0=安全,1=中风险,2=高风险; " +
-            "summary: 一句话总结风险; " +
-            "suggestion: 2-3 句具体建议。" +
-            "输出要求：只返回单个 JSON 对象，不要使用 Markdown、不要使用代码块、不要添加额外文字或前后缀。示例: {\"score\":40,\"riskLevel\":2,\"summary\":\"...\",\"suggestion\":\"...\"}";
+                "输入信息: 配料列表=[" + ingredients + "], 食用人群=" + target + "。" +
+                "请务必直接返回以下字段的 JSON，对应中文含义无需再解释：" +
+                "score: 0-100 的整数; " +
+                "riskLevel: 风险等级，0=安全,1=中风险,2=高风险; " +
+                "summary: 一句话总结风险; " +
+                "suggestion: 2-3 句具体建议。" +
+                "输出要求：只返回单个 JSON 对象，不要使用 Markdown、不要使用代码块、不要添加额外文字或前后缀。示例: {\"score\":40,\"riskLevel\":2,\"summary\":\"...\",\"suggestion\":\"...\"}";
+    }
+
+    private String buildRiskPrompt(String ingredients) {
+        String safeIng = ingredients == null ? "" : ingredients;
+        return "你是食品配料安全分析师，请输出严格的 JSON，不要包含除 JSON 外的任何内容。" +
+                "评分规则：80-100 分 riskLevel=0（安全），40-79 分 riskLevel=1（中风险），0-39 分 riskLevel=2（高风险）。" +
+                "返回格式: {\"score\":80,\"riskLevel\":0,\"riskMsg\":\"风险说明\"}。" +
+                "配料表：" + safeIng;
     }
 
     private String callChatModel(String prompt) {
         String url = aiProperties.getApiUrl();
-        if (url == null || url.isEmpty()) {
+        if (!StringUtils.hasText(url)) {
             throw new RuntimeException("AI 接口地址未配置");
         }
-        String model = aiProperties.getModel() == null ? "deepseek-chat" : aiProperties.getModel();
+        String model = !StringUtils.hasText(aiProperties.getModel()) ? "deepseek-chat" : aiProperties.getModel();
         try (CloseableHttpClient client = HttpClients.createDefault()) {
             HttpPost post = new HttpPost(url);
             post.setHeader("Content-Type", "application/json");
@@ -136,11 +148,10 @@ public class AiServiceImpl implements AiService {
                 log.info("AI analyze resp: {}", resp);
                 JSONObject json = JSON.parseObject(resp);
 
-                String content = json.getJSONArray("choices")
+                return json.getJSONArray("choices")
                         .getJSONObject(0)
                         .getJSONObject("message")
                         .getString("content");
-                return content;
             }
         } catch (Exception e) {
             log.error("调用大模型失败", e);
@@ -162,7 +173,6 @@ public class AiServiceImpl implements AiService {
                     .suggestion(obj.getString("suggestion"))
                     .build();
         } catch (Exception e) {
-            // 若非 JSON，降级为纯文本摘要
             return AiAnalyzeVO.builder()
                     .score(null)
                     .riskLevel(null)
@@ -172,22 +182,54 @@ public class AiServiceImpl implements AiService {
         }
     }
 
+    private AiAnalysisResult parseAiAnalysisResult(String content) {
+        if (!StringUtils.hasText(content)) {
+            return AiAnalysisResult.builder()
+                    .score(80)
+                    .riskLevel(0)
+                    .riskMsg("未获取到AI结果，默认标记为低风险")
+                    .build();
+        }
+        try {
+            String cleaned = extractJsonObject(content);
+            JSONObject obj = JSON.parseObject(cleaned);
+            int score = obj.getInteger("score") == null ? 80 : obj.getInteger("score");
+            int riskLevel = obj.getInteger("riskLevel") == null ? 0 : obj.getInteger("riskLevel");
+            String riskMsg = obj.getString("riskMsg");
+            if (!StringUtils.hasText(riskMsg)) {
+                riskMsg = obj.getString("summary");
+            }
+            if (!StringUtils.hasText(riskMsg)) {
+                riskMsg = "分析成功";
+            }
+            return AiAnalysisResult.builder()
+                    .score(score)
+                    .riskLevel(riskLevel)
+                    .riskMsg(riskMsg)
+                    .build();
+        } catch (Exception e) {
+            log.warn("解析 AI 风险结果失败，使用默认低风险: {}", content, e);
+            return AiAnalysisResult.builder()
+                    .score(80)
+                    .riskLevel(0)
+                    .riskMsg("AI 解析失败，默认标记为低风险")
+                    .build();
+        }
+    }
+
     private String extractJsonObject(String content) {
         String trimmed = content.trim();
 
-        // 优先解析 markdown 代码块中的 JSON
         Pattern block = Pattern.compile("```(?:json)?\\s*(\\{[\\s\\S]*?\\})\\s*```", Pattern.CASE_INSENSITIVE);
         Matcher matcher = block.matcher(trimmed);
         if (matcher.find()) {
             trimmed = matcher.group(1);
         }
 
-        // 如果字符串外层包裹了引号，去除引号
         if ((trimmed.startsWith("\"") && trimmed.endsWith("\"")) || (trimmed.startsWith("'") && trimmed.endsWith("'"))) {
             trimmed = trimmed.substring(1, trimmed.length() - 1);
         }
 
-        // 尝试截取第一个完整的 JSON 对象片段
         int left = trimmed.indexOf('{');
         int right = trimmed.lastIndexOf('}');
         if (left >= 0 && right > left) {
@@ -200,7 +242,7 @@ public class AiServiceImpl implements AiService {
     private String callAliyunOcr(byte[] imageBytes, String imageUrl) {
         String url = aiProperties.getOcrUrl();
         String appCode = aiProperties.getOcrAppCode();
-        if (url == null || url.isEmpty() || appCode == null || appCode.isEmpty()) {
+        if (!StringUtils.hasText(url) || !StringUtils.hasText(appCode)) {
             throw new RuntimeException("OCR 接口配置缺失");
         }
 
@@ -226,9 +268,8 @@ public class AiServiceImpl implements AiService {
                 log.info("Aliyun OCR resp: {}", resp);
                 JSONObject json = JSON.parseObject(resp);
 
-                // 优先使用 content 字段，其次拼接 prism_wordsInfo 中的 word
                 String content = json.getString("content");
-                if (content != null && !content.isEmpty()) {
+                if (StringUtils.hasText(content)) {
                     return content;
                 }
                 if (json.containsKey("prism_wordsInfo")) {

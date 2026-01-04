@@ -1,69 +1,98 @@
 package com.itheima.common.untils;
 
-import com.aliyun.oss.ClientException;
 import com.aliyun.oss.OSS;
 import com.aliyun.oss.OSSClientBuilder;
-import com.aliyun.oss.OSSException;
-import lombok.AllArgsConstructor;
-import lombok.Data;
+import com.itheima.common.properties.AliOssProperties;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
+import org.springframework.web.multipart.MultipartFile;
 
-import java.io.ByteArrayInputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
+import java.util.UUID;
 
-@Data
-@AllArgsConstructor
 @Slf4j
+@Component
 public class AliOssUtil {
+
+    @Autowired
+    private AliOssProperties aliOssProperties;
 
     private String endpoint;
     private String accessKeyId;
     private String accessKeySecret;
     private String bucketName;
 
-    /**
-     * 文件上传
-     *
-     * @param bytes
-     * @param objectName
-     * @return
-     */
-    public String upload(byte[] bytes, String objectName) {
+    public AliOssUtil(String endpoint, String accessKeyId, String accessKeySecret, String bucketName) {
+        this.endpoint = endpoint;
+        this.accessKeyId = accessKeyId;
+        this.accessKeySecret = accessKeySecret;
+        this.bucketName = bucketName;
+    }
 
-        // 创建OSSClient实例。
-        OSS ossClient = new OSSClientBuilder().build(endpoint, accessKeyId, accessKeySecret);
+    /**
+     * 上传文件到阿里云OSS
+     * @param file 上传的文件
+     * @return 文件访问URL
+     * @throws IOException
+     */
+    public String upload(MultipartFile file) throws IOException {
+        // 获取原始文件名
+        String originalFilename = file.getOriginalFilename();
+        if (originalFilename == null) {
+            throw new IllegalArgumentException("文件名不能为空");
+        }
+
+        // 获取文件扩展名
+        String extension = "";
+        int dotIndex = originalFilename.lastIndexOf(".");
+        if (dotIndex > 0) {
+            extension = originalFilename.substring(dotIndex);
+        }
+
+        // 使用UUID生成新文件名
+        String objectName = generateObjectName(extension);
+
+        // 创建OSSClient实例
+        OSS ossClient = new OSSClientBuilder().build(
+                aliOssProperties.getEndpoint(),
+                aliOssProperties.getAccessKeyId(),
+                aliOssProperties.getAccessKeySecret());
 
         try {
-            // 创建PutObject请求。
-            ossClient.putObject(bucketName, objectName, new ByteArrayInputStream(bytes));
-        } catch (OSSException oe) {
-            System.out.println("Caught an OSSException, which means your request made it to OSS, "
-                    + "but was rejected with an error response for some reason.");
-            System.out.println("Error Message:" + oe.getErrorMessage());
-            System.out.println("Error Code:" + oe.getErrorCode());
-            System.out.println("Request ID:" + oe.getRequestId());
-            System.out.println("Host ID:" + oe.getHostId());
-        } catch (ClientException ce) {
-            System.out.println("Caught an ClientException, which means the client encountered "
-                    + "a serious internal problem while trying to communicate with OSS, "
-                    + "such as not being able to access the network.");
-            System.out.println("Error Message:" + ce.getMessage());
+            // 上传文件流
+            InputStream inputStream = file.getInputStream();
+            ossClient.putObject(aliOssProperties.getBucketName(), objectName, inputStream);
+
+            // 返回完整的URL
+            return String.format("https://%s.%s/%s",
+                    aliOssProperties.getBucketName(),
+                    aliOssProperties.getEndpoint(),
+                    objectName);
         } finally {
             if (ossClient != null) {
                 ossClient.shutdown();
             }
         }
+    }
 
-        //文件访问路径规则 https://BucketName.Endpoint/ObjectName
-        StringBuilder stringBuilder = new StringBuilder("https://");
-        stringBuilder
-                .append(bucketName)
-                .append(".")
-                .append(endpoint)
-                .append("/")
-                .append(objectName);
+    /**
+     * 生成对象名（路径+文件名）
+     * @param extension 文件扩展名
+     * @return 对象名
+     */
+    private String generateObjectName(String extension) {
+        // 按日期生成目录：yyyy/MM/dd
+        String datePath = LocalDate.now()
+                .format(DateTimeFormatter.ofPattern("yyyy/MM/dd"));
 
-        log.info("文件上传到:{}", stringBuilder.toString());
+        // 使用UUID作为文件名
+        String fileName = UUID.randomUUID().toString().replace("-", "") + extension;
 
-        return stringBuilder.toString();
+        // 组合成完整路径
+        return datePath + "/" + fileName;
     }
 }

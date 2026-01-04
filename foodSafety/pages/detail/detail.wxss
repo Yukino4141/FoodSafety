@@ -1,0 +1,866 @@
+/* pages/detail/detail.wxss */
+.detail-page {
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  background-color: #f7f9f8;
+}
+
+/* 自定义导航栏 */
+.custom-nav {
+  height: 88px;
+  background: white;
+  display: flex;
+  align-items: center;
+  padding: 0 16px;
+  border-bottom: 1px solid #f0f0f0;
+  position: relative;
+  z-index: 100;
+}
+
+.nav-left, .nav-right {
+  width: 44px;
+  height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.nav-title {
+  flex: 1;
+  text-align: center;
+  font-size: 17px;
+  font-weight: 600;
+  color: #2c3e50;
+}
+
+.nav-right {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.nav-icon {
+  width: 44px;
+  height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* 滚动内容区域 */
+.scroll-content {
+  flex: 1;
+  overflow: hidden;
+}
+
+/* 商品卡片 */
+.product-card {
+  background: white;
+  margin: 16px;
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
+}
+
+.product-image-container {
+  position: relative;
+  height: 200px;
+  background: #f5f5f5;
+}
+
+.product-image {
+  width: 100%;
+  height: 100%;
+}
+
+.image-badge {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+}
+
+.safety-badge {
+  padding: 6px 12px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 600;
+  color: white;
+}
+
+.badge-danger {
+  background: rgba(231, 76, 60, 0.9);
+}
+
+.badge-safe {
+  background: rgba(46, 204, 113, 0.9);
+}
+
+.product-info {
+  padding: 20px;
+}
+
+.product-name {
+  font-size: 18px;
+  font-weight: 700;
+  color: #2c3e50;
+  line-height: 1.4;
+  margin-bottom: 12px;
+  display: block;
+}
+
+.product-meta {
+  margin-bottom: 16px;
+}
+
+.meta-item {
+  display: flex;
+  align-items: center;
+  margin-bottom: 8px;
+  font-size: 13px;
+  color: #95a5a6;
+}
+
+.meta-item icon {
+  margin-right: 6px;
+}
+
+/* 风险等级 */
+.risk-level {
+  padding: 12px;
+  background: rgba(231, 76, 60, 0.05);
+  border-radius: 8px;
+  border-left: 4px solid #e74c3c;
+}
+
+.level-header {
+  display: flex;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.level-title {
+  margin-left: 6px;
+  font-size: 14px;
+  font-weight: 600;
+  color: #2c3e50;
+}
+
+.level-indicator {
+  display: flex;
+  gap: 8px;
+}
+
+.level-bar {
+  flex: 1;
+  padding: 6px 0;
+  text-align: center;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 500;
+  background: #f0f0f0;
+  color: #95a5a6;
+}
+
+.level-bar.active {
+  background: #ffc107;
+  color: #2c3e50;
+}
+
+.level-bar.current {
+  background: #e74c3c;
+  color: white;
+}
+
+/* 警告卡片 */
+.warning-card {
+  margin: 0 16px 16px;
+  background: linear-gradient(135deg, rgba(231, 76, 60, 0.1) 0%, rgba(231, 76, 60, 0.05) 100%);
+  border-radius: 16px;
+  padding: 16px;
+  border: 1px solid rgba(231, 76, 60, 0.2);
+}
+
+.warning-header {
+  display: flex;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.warning-title {
+  margin-left: 8px;
+  font-size: 16px;
+  font-weight: 700;
+  color: #e74c3c;
+}
+
+.warning-content {
+  margin-left: 28px;
+}
+
+.warning-message {
+  display: block;
+  font-size: 14px;
+  color: #e74c3c;
+  margin-bottom: 8px;
+  line-height: 1.5;
+}
+
+.warning-tips {
+  padding-left: 16px;
+}
+
+.tip-item {
+  display: block;
+  font-size: 13px;
+  color: #e74c3c;
+  line-height: 1.8;
+  opacity: 0.8;
+}
+
+/* 章节卡片 */
+.section-card {
+  background: white;
+  margin: 16px;
+  border-radius: 16px;
+  padding: 20px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
+}
+
+.section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.section-title-line {
+  display: flex;
+  align-items: center;
+}
+
+.section-title-line icon {
+  margin-right: 8px;
+}
+
+.section-title {
+  font-size: 16px;
+  font-weight: 700;
+  color: #2c3e50;
+}
+
+.section-count, .section-hint {
+  font-size: 12px;
+  color: #95a5a6;
+}
+
+/* 配料分析 */
+.ingredients-container {
+  margin-bottom: 16px;
+}
+
+.ingredient-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 0;
+}
+
+.ingredient-main {
+  flex: 1;
+  display: flex;
+  align-items: center;
+}
+
+.ingredient-index {
+  font-size: 14px;
+  color: #95a5a6;
+  margin-right: 8px;
+  min-width: 20px;
+}
+
+.ingredient-name {
+  font-size: 15px;
+  color: #2c3e50;
+}
+
+.risk-name {
+  color: #e74c3c;
+  font-weight: 600;
+}
+
+.ingredient-additive {
+  margin-left: 8px;
+}
+
+.additive-tag {
+  font-size: 10px;
+  color: #f39c12;
+  background: rgba(243, 156, 18, 0.1);
+  padding: 2px 6px;
+  border-radius: 4px;
+}
+
+.ingredient-tags {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.ingredient-tag {
+  font-size: 11px;
+  padding: 4px 8px;
+  border-radius: 12px;
+  font-weight: 500;
+}
+
+.tag-high-risk {
+  background: rgba(231, 76, 60, 0.1);
+  color: #e74c3c;
+}
+
+.tag-medium-risk {
+  background: rgba(241, 196, 15, 0.1);
+  color: #f39c12;
+}
+
+.tag-low-risk {
+  background: rgba(46, 204, 113, 0.1);
+  color: #2ecc71;
+}
+
+.tag-safe {
+  background: rgba(46, 204, 113, 0.1);
+  color: #2ecc71;
+}
+
+.allergen-tag {
+  background: rgba(155, 89, 182, 0.1);
+  color: #9b59b6;
+}
+
+.divider {
+  height: 1px;
+  background: #f0f0f0;
+  margin: 4px 0;
+}
+
+/* 风险统计 */
+.risk-stats {
+  display: flex;
+  justify-content: space-around;
+  padding: 16px;
+  background: #f8f9fa;
+  border-radius: 12px;
+  margin-top: 12px;
+}
+
+.stat-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.stat-value {
+  font-size: 24px;
+  font-weight: 700;
+  color: #2c3e50;
+  margin-bottom: 4px;
+}
+
+.stat-label {
+  font-size: 12px;
+  color: #95a5a6;
+}
+
+/* 营养成分表 */
+.nutrition-table {
+  margin-top: 16px;
+}
+
+.table-header {
+  display: flex;
+  background: #f8f9fa;
+  border-radius: 8px;
+  padding: 12px;
+  margin-bottom: 8px;
+}
+
+.header-cell {
+  flex: 1;
+  text-align: center;
+  font-size: 13px;
+  font-weight: 600;
+  color: #2c3e50;
+}
+
+.nutrition-row {
+  display: flex;
+  align-items: center;
+  padding: 12px;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.highlight-row {
+  background: rgba(231, 76, 60, 0.05);
+  border-radius: 8px;
+  margin: 4px 0;
+}
+
+.nutrient-name {
+  flex: 1;
+  font-size: 14px;
+  color: #2c3e50;
+}
+
+.nutrient-value {
+  flex: 1;
+  text-align: center;
+  font-size: 14px;
+  color: #2c3e50;
+}
+
+.nutrient-percent {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.percent-value {
+  font-size: 14px;
+  color: #2c3e50;
+  margin-bottom: 4px;
+}
+
+.percent-bar {
+  width: 80%;
+  height: 6px;
+  background: #f0f0f0;
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.percent-fill {
+  height: 100%;
+  background: #2ecc71;
+  transition: width 0.3s ease;
+}
+
+.percent-fill.over-limit {
+  background: #e74c3c;
+}
+
+.nutrient-status {
+  flex: 1;
+  text-align: center;
+}
+
+.status-text {
+  font-size: 12px;
+  padding: 4px 8px;
+  border-radius: 12px;
+  font-weight: 500;
+}
+
+.status-text.normal {
+  background: rgba(46, 204, 113, 0.1);
+  color: #2ecc71;
+}
+
+.status-text.high {
+  background: rgba(231, 76, 60, 0.1);
+  color: #e74c3c;
+}
+
+.status-text.low {
+  background: rgba(52, 152, 219, 0.1);
+  color: #3498db;
+}
+
+/* 营养提示 */
+.nutrition-tips {
+  margin-top: 16px;
+  padding: 16px;
+  background: rgba(52, 152, 219, 0.05);
+  border-radius: 12px;
+  border-left: 4px solid #3498db;
+}
+
+.tip-title {
+  display: block;
+  font-size: 14px;
+  font-weight: 600;
+  color: #3498db;
+  margin-bottom: 8px;
+}
+
+.tip-content {
+  font-size: 13px;
+  color: #3498db;
+  line-height: 1.6;
+  opacity: 0.9;
+}
+
+/* 类似产品推荐 */
+.similar-list {
+  white-space: nowrap;
+  margin-top: 12px;
+}
+
+.similar-item {
+  display: inline-block;
+  width: 200px;
+  margin-right: 12px;
+  background: #f8f9fa;
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.similar-image {
+  width: 100%;
+  height: 120px;
+  background: #f5f5f5;
+}
+
+.similar-info {
+  padding: 12px;
+}
+
+.similar-name {
+  display: block;
+  font-size: 14px;
+  font-weight: 600;
+  color: #2c3e50;
+  white-space: normal;
+  margin-bottom: 8px;
+}
+
+.similar-safety {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 8px;
+  border-radius: 12px;
+  font-size: 12px;
+  margin-bottom: 8px;
+}
+
+.safe-badge {
+  background: rgba(46, 204, 113, 0.1);
+  color: #2ecc71;
+}
+
+.similar-safety icon {
+  margin-right: 4px;
+}
+
+.similar-reason {
+  background: white;
+  padding: 8px;
+  border-radius: 8px;
+  margin-top: 8px;
+}
+
+.reason-text {
+  font-size: 12px;
+  color: #95a5a6;
+  line-height: 1.4;
+  white-space: normal;
+}
+
+/* 信息网格 */
+.info-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
+  margin-top: 16px;
+}
+
+.info-item {
+  display: flex;
+  flex-direction: column;
+  padding: 12px;
+  background: #f8f9fa;
+  border-radius: 8px;
+}
+
+.info-label {
+  font-size: 12px;
+  color: #95a5a6;
+  margin-bottom: 4px;
+}
+
+.info-value {
+  font-size: 14px;
+  color: #2c3e50;
+  font-weight: 500;
+}
+
+/* 用户反馈 */
+.feedback-section {
+  margin: 16px;
+  background: white;
+  border-radius: 16px;
+  padding: 20px;
+  text-align: center;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
+}
+
+.feedback-title {
+  display: block;
+  font-size: 15px;
+  color: #2c3e50;
+  margin-bottom: 16px;
+}
+
+.feedback-buttons {
+  display: flex;
+  gap: 16px;
+  justify-content: center;
+}
+
+.feedback-btn {
+  flex: 1;
+  padding: 12px;
+  border-radius: 12px;
+  font-size: 14px;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  border: none;
+}
+
+.feedback-btn::after {
+  border: none;
+}
+
+.feedback-btn.accurate {
+  background: rgba(46, 204, 113, 0.1);
+  color: #2ecc71;
+}
+
+.feedback-btn.inaccurate {
+  background: rgba(231, 76, 60, 0.1);
+  color: #e74c3c;
+}
+
+/* 底部操作栏 */
+.action-bar {
+  display: flex;
+  background: white;
+  border-top: 1px solid #f0f0f0;
+  padding: 12px 16px;
+  gap: 12px;
+}
+
+.action-btn {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 14px;
+  border-radius: 12px;
+  font-size: 14px;
+  font-weight: 600;
+  border: none;
+}
+
+.action-btn::after {
+  border: none;
+}
+
+.action-btn.secondary {
+  background: #f8f9fa;
+  color: #2c3e50;
+}
+
+.action-btn.primary {
+  background: linear-gradient(135deg, #2ecc71 0%, #27ae60 100%);
+  color: white;
+}
+
+/* 加载动画 */
+.loading-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(255, 255, 255, 0.95);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 999;
+}
+
+.loading-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.spinner {
+  width: 40px;
+  height: 40px;
+  border: 4px solid #f3f3f3;
+  border-top: 4px solid #2ecc71;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin-bottom: 16px;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.loading-text {
+  font-size: 14px;
+  color: #95a5a6;
+}
+
+/* 配料详情弹窗 */
+.ingredient-modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 1000;
+}
+
+.modal-mask {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+}
+
+.modal-content {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: white;
+  border-top-left-radius: 20px;
+  border-top-right-radius: 20px;
+  max-height: 80vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.modal-title {
+  font-size: 18px;
+  font-weight: 600;
+  color: #2c3e50;
+}
+
+.modal-body {
+  flex: 1;
+  padding: 20px;
+}
+
+.ingredient-detail {
+  padding-bottom: 20px;
+}
+
+.detail-name {
+  display: block;
+  font-size: 20px;
+  font-weight: 700;
+  color: #2c3e50;
+  margin-bottom: 16px;
+}
+
+.detail-tags {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 20px;
+}
+
+.detail-tag {
+  padding: 6px 12px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.risk-tag {
+  background: rgba(231, 76, 60, 0.1);
+  color: #e74c3c;
+}
+
+.safe-tag {
+  background: rgba(46, 204, 113, 0.1);
+  color: #2ecc71;
+}
+
+.type-tag {
+  background: rgba(155, 89, 182, 0.1);
+  color: #9b59b6;
+}
+
+.detail-info, .detail-risk {
+  margin-bottom: 20px;
+}
+
+.info-title, .risk-title {
+  display: block;
+  font-size: 14px;
+  font-weight: 600;
+  color: #2c3e50;
+  margin-bottom: 8px;
+}
+
+.info-content, .risk-content {
+  font-size: 14px;
+  color: #666;
+  line-height: 1.6;
+}
+
+.detail-source {
+  margin-top: 20px;
+  padding-top: 20px;
+  border-top: 1px solid #f0f0f0;
+}
+
+.source-text {
+  font-size: 12px;
+  color: #95a5a6;
+  text-align: center;
+  display: block;
+}
+
+.modal-footer {
+  padding: 20px;
+  border-top: 1px solid #f0f0f0;
+}
+
+.modal-btn {
+  width: 100%;
+  background: #2ecc71;
+  color: white;
+  border-radius: 12px;
+  padding: 16px;
+  font-size: 16px;
+  font-weight: 600;
+  border: none;
+}
+
+.modal-btn::after {
+  border: none;
+}

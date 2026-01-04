@@ -1,0 +1,168 @@
+/* pages/profile/profile.wxss */
+page {
+    background-color: #f7f8fa;
+    color: #333;
+  }
+  
+  .container {
+    padding-bottom: 40rpx;
+  }
+  
+  /* 头部背景 */
+  .header-section {
+    background: linear-gradient(180deg, #07c160 0%, #10ad61 100%);
+    height: 300rpx;
+    padding-top: 10rpx;
+    border-radius: 40rpx 40rpx 40rpx 40rpx;
+  }
+  
+  .user-card {
+    display: flex;
+    align-items: center;
+    padding: 40rpx;
+  }
+  
+  .avatar {
+    width: 120rpx;
+    height: 120rpx;
+    border-radius: 60rpx;
+    border: 4rpx solid rgba(255, 255, 255, 0.5);
+    background-color: #eee;
+  }
+  
+  .user-info {
+    margin-left: 30rpx;
+    display: flex;
+    flex-direction: column;
+  }
+  
+  .nickname {
+    color: #ffffff;
+    font-size: 36rpx;
+    font-weight: bold;
+  }
+  
+  .user-tag {
+    color: rgba(255, 255, 255, 0.8);
+    font-size: 24rpx;
+    margin-top: 10rpx;
+    background: rgba(255, 255, 255, 0.2);
+    padding: 4rpx 16rpx;
+    border-radius: 20rpx;
+    width: fit-content;
+  }
+  
+  .login-btn {
+    background: transparent;
+    color: #ffffff;
+    border: 2rpx solid #ffffff;
+    font-size: 28rpx;
+    margin-left: 30rpx;
+    border-radius: 40rpx;
+    padding: 0 40rpx;
+  }
+  
+  /* 统计卡片 */
+  .stats-card {
+    margin: -60rpx 30rpx 30rpx;
+    background: #ffffff;
+    border-radius: 24rpx;
+    padding: 40rpx 0rpx;
+    flex-wrap: wrap;
+    display: flex;
+    justify-content: space-around;
+    box-shadow: 0 8rpx 24rpx rgba(0, 0, 0, 0.05);
+  }
+  
+  .stats-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 50%;         /* 核心属性：每个项目占 50% 宽度，一行正好放两个 */
+    margin: 20rpx 0;    /* 增加上下间距，让两排之间不拥挤 */
+    box-sizing: border-box;
+  }
+  
+  .stats-num {
+    font-size: 40rpx;
+    font-weight: bold;
+    color: #333;
+  }
+  
+  .stats-num.risk { color: #fa5151; } /* 风险红 */
+  .stats-num.safe { color: #07c160; } /* 安全绿 */
+  
+  .stats-label {
+    font-size: 24rpx;
+    color: #999;
+    margin-top: 8rpx;
+  }
+  
+  /* 菜单列表 */
+  .menu-list {
+    margin: 30rpx;
+    background: #ffffff;
+    border-radius: 24rpx;
+    overflow: hidden;
+  }
+  
+  .menu-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 34rpx 30rpx;
+    border-bottom: 1rpx solid #f2f2f2;
+  }
+  
+  .menu-item:last-child {
+    border-bottom: none;
+  }
+  
+  .menu-left {
+    display: flex;
+    align-items: center;
+  }
+  
+  .icon-wrapper {
+    width: 40rpx;
+    height: 40rpx;
+    margin-right: 24rpx;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  
+  /* 模拟小图标，建议替换为图片 */
+  .dot {
+    width: 16rpx;
+    height: 16rpx;
+    background-color: #07c160;
+    border-radius: 50%;
+  }
+  
+  .menu-text {
+    font-size: 30rpx;
+    color: #333;
+  }
+  
+  .arrow-right {
+    width: 16rpx;
+    height: 16rpx;
+    border-top: 4rpx solid #ccc;
+    border-right: 4rpx solid #ccc;
+    transform: rotate(45deg);
+  }
+  
+  /* 底部按钮 */
+  .footer-section {
+    margin-top: 60rpx;
+    padding: 0 30rpx;
+  }
+  
+  .logout-btn {
+    background: #ffffff;
+    color: #fa5151;
+    font-size: 30rpx;
+    border-radius: 20rpx;
+    border: none;
+  }

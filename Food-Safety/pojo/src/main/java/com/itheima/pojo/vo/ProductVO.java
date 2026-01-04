@@ -28,7 +28,8 @@ public class ProductVO implements Serializable {
 
     // 配料展示
     private List<String> ingredientList; // 将 JSON 转为 List 给前端渲染标签
-    private Object nutritionInfo;        // Map 或 JSON 展示营养成分
+    private Object nutritionInfo;        // Map 或 JSON 展示营养成分表
+
 
     // 风险预警 (前端据此显示红色/绿色)
     private String safetyStatus; // 枚举值: "SAFE" 或 "RISK"

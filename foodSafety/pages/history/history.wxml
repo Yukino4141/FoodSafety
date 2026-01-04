@@ -1,0 +1,171 @@
+<!-- pages/history/history.wxml -->
+<view class="history-page">
+  
+  <!-- 标题栏 -->
+  <view class="navbar">
+    <view class="nav-left">
+      <text class="nav-title">扫描历史</text>
+    </view>
+    <view class="nav-right" wx:if="{{historyList.length > 0}}">
+      <view class="nav-action" bindtap="clearAllHistory">
+        <text class="action-text">清空</text>
+      </view>
+    </view>
+  </view>
+  
+  <!-- 统计卡片 -->
+  <view class="stats-card" wx:if="{{!noData}}">
+    <view class="stats-item">
+      <text class="stats-number">{{stats.total}}</text>
+      <text class="stats-label">总扫描</text>
+    </view>
+    <view class="stats-divider"></view>
+    <view class="stats-item">
+      <text class="stats-number stats-safe">{{stats.safe}}</text>
+      <text class="stats-label">安全</text>
+    </view>
+    <view class="stats-divider"></view>
+    <view class="stats-item">
+      <text class="stats-number stats-risk">{{stats.risk}}</text>
+      <text class="stats-label">有风险</text>
+    </view>
+    <view class="stats-divider"></view>
+    <view class="stats-item">
+      <text class="stats-number stats-danger">{{stats.danger}}</text>
+      <text class="stats-label">高风险</text>
+    </view>
+  </view>
+  
+  <!-- 筛选栏 -->
+  <view class="filter-bar">
+    <scroll-view class="filter-scroll" scroll-x>
+      <view class="filter-container">
+        <block wx:for="{{filterStatuses}}" wx:key="value">
+          <view 
+            class="filter-item {{filterStatus === item.value ? 'active' : ''}}"
+            data-status="{{item.value}}"
+            bindtap="onFilterChange"
+            style="{{filterStatus === item.value ? 'color: ' + item.color + '; border-color: ' + item.color + ';' : ''}}"
+          >
+            <text class="filter-text">{{item.text}}</text>
+            <text class="filter-count" wx:if="{{item.value === 'all'}}">{{stats.total}}</text>
+            <text class="filter-count" wx:if="{{item.value === 'SAFE'}}">{{stats.safe}}</text>
+            <text class="filter-count" wx:if="{{item.value === 'RISK'}}">{{stats.risk}}</text>
+            <text class="filter-count" wx:if="{{item.value === 'DANGER'}}">{{stats.danger}}</text>
+          </view>
+        </block>
+      </view>
+    </scroll-view>
+  </view>
+  
+  <!-- 历史记录列表 -->
+  <view class="history-content">
+    <!-- 加载中 -->
+    <view class="loading-container" wx:if="{{loading && !loadingMore}}">
+      <view class="loading-spinner"></view>
+      <text class="loading-text">加载中...</text>
+    </view>
+    
+    <!-- 空状态 -->
+    <view class="empty-state" wx:if="{{noData && !loading}}">
+      <view class="empty-illustration">
+        <image src="/assets/images/empty-history.png" class="empty-image" mode="aspectFit" />
+      </view>
+      <text class="empty-title">暂无扫描记录</text>
+      <text class="empty-desc">开始扫描第一个商品吧！</text>
+      <view class="empty-action" bindtap="goToScan">
+        <text class="action-text">立即扫码</text>
+      </view>
+    </view>
+    
+    <!-- 历史记录卡片列表 -->
+    <view class="history-list" wx:if="{{!loading && !noData}}">
+      <block wx:for="{{historyList}}" wx:key="id">
+        <view 
+          class="history-card {{item.safetyStatus === 'RISK' ? 'card-risk' : item.safetyStatus === 'DANGER' ? 'card-danger' : 'card-safe'}}"
+          data-id="{{item.id}}"
+          data-barcode="{{item.barcode}}"
+          data-name="{{item.name}}"
+          data-safetyStatus="{{item.safetyStatus}}"
+          bindtap="viewDetail"
+          bindlongpress="onItemLongPress"
+          hover-class="card-hover"
+        >
+          <!-- 商品图片 -->
+          <view class="card-image-container">
+            <image 
+              src="{{item.image}}" 
+              class="card-image" 
+              mode="aspectFill"
+              lazy-load
+            />
+            <!-- 安全状态角标 -->
+            <view class="card-corner {{item.safetyStatus === 'RISK' ? 'corner-risk' : item.safetyStatus === 'DANGER' ? 'corner-danger' : 'corner-safe'}}">
+              <icon 
+                type="{{item.safetyStatus === 'RISK' || item.safetyStatus === 'DANGER' ? 'warn' : 'success'}}" 
+                size="12" 
+                color="#ffffff" 
+              />
+              <text class="corner-text">
+                {{item.safetyStatus === 'DANGER' ? '高风险' : 
+                  item.safetyStatus === 'RISK' ? '有风险' : '安全'}}
+              </text>
+            </view>
+          </view>
+          
+          <!-- 商品信息 -->
+          <view class="card-content">
+            <!-- 商品名称 -->
+            <view class="card-header">
+              <text class="product-name">{{item.name}}</text>
+              <icon type="right" size="16" color="#d1d5db" class="arrow-icon" />
+            </view>
+            
+            <!-- 风险提示 -->
+            <view class="risk-hint" wx:if="{{item.riskMsg}}">
+              <icon type="warn" size="12" color="#e74c3c" />
+              <text class="hint-text">{{item.riskMsg}}</text>
+            </view>
+            
+            <!-- 配料简略 -->
+            <view class="ingredients-preview" wx:if="{{item.ingredientList && item.ingredientList.length > 0}}">
+              <text class="preview-text">
+                {{item.ingredientList.slice(0, 3).join('、')}}
+                {{item.ingredientList.length > 3 ? '...' : ''}}
+              </text>
+            </view>
+            
+            <!-- 扫描时间和条形码 -->
+            <view class="card-footer">
+              <view class="scan-time">
+                <icon type="time" size="12" color="#9ca3af" />
+                <text class="time-text">{{formatTime(item.updateTime)}}</text>
+              </view>
+              <view class="barcode-info" bindtap="copyBarcode" data-barcode="{{item.barcode}}" catchtap>
+                <icon type="barcode" size="12" color="#9ca3af" />
+                <text class="barcode-text">{{item.barcode}}</text>
+                <icon type="copy" size="12" color="#9ca3af" class="copy-icon" />
+              </view>
+            </view>
+          </view>
+        </view>
+      </block>
+    </view>
+    
+    <!-- 加载更多 -->
+    <view class="load-more" wx:if="{{loadingMore}}">
+      <view class="more-spinner"></view>
+      <text class="more-text">加载中...</text>
+    </view>
+    
+    <view class="no-more" wx:if="{{!hasMore && !loading && !noData && historyList.length > 0}}">
+      <text class="no-more-text">已显示全部记录</text>
+    </view>
+  </view>
+  
+  <!-- 底部安全提示 -->
+  <view class="safety-tips" wx:if="{{!noData}}">
+    <icon type="safe" size="16" color="#2ecc71" />
+    <text class="tips-text">食安卫士已为您分析 {{stats.total}} 件商品</text>
+  </view>
+</view>

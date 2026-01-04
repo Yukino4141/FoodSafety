@@ -1,0 +1,7 @@
+{
+  "navigationBarTitleText": "扫描历史",
+  "enablePullDownRefresh": true,
+  "backgroundTextStyle": "dark",
+  "backgroundColor": "#f8f9fa",
+  "onReachBottomDistance": 50
+}

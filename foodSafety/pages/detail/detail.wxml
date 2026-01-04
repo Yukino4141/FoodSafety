@@ -1,0 +1,367 @@
+<!-- pages/detail/detail.wxml -->
+<view class="detail-page">
+  <!-- 自定义导航栏 -->
+  <view class="custom-nav" style="padding-top: {{statusBarHeight}}px">
+    <view class="nav-left" bindtap="goBack">
+      <icon type="back" size="24" color="#2c3e50" />
+    </view>
+    <text class="nav-title">检测结果</text>
+    <view class="nav-right">
+      <view class="nav-icon" bindtap="toggleFavorite">
+        <icon 
+          type="{{isFavorite ? 'star' : 'star-o'}}" 
+          size="20" 
+          color="{{isFavorite ? '#f1c40f' : '#2c3e50'}}" 
+        />
+      </view>
+      <view class="nav-icon" bindtap="shareProduct">
+        <icon type="share" size="20" color="#2c3e50" />
+      </view>
+    </view>
+  </view>
+
+  <!-- 商品基本信息 -->
+  <scroll-view 
+    class="scroll-content" 
+    scroll-y 
+    refresher-enabled="{{true}}"
+    refresher-triggered="{{refreshing}}"
+    bindrefresherrefresh="onRefresh"
+    bindscrolltolower="loadMore"
+  >
+    <!-- 商品卡片 -->
+    <view class="product-card">
+      <!-- 商品图片 -->
+      <view class="product-image-container">
+        <image 
+          class="product-image" 
+          src="{{product.image || '/assets/images/default-food.png'}}" 
+          mode="aspectFill" 
+          bindtap="previewImage"
+        />
+        <view class="image-badge">
+          <view class="safety-badge {{product.safetyStatus === 'RISK' ? 'badge-danger' : 'badge-safe'}}">
+            {{product.safetyStatus === 'RISK' ? '有风险' : '安全'}}
+          </view>
+        </view>
+      </view>
+
+      <!-- 商品信息 -->
+      <view class="product-info">
+        <text class="product-name">{{product.name || '加载中...'}}</text>
+        
+        <view class="product-meta">
+          <view class="meta-item" wx:if="{{product.barcode}}">
+            <icon type="barcode" size="14" color="#95a5a6" />
+            <text>条形码: {{product.barcode}}</text>
+          </view>
+          <view class="meta-item" wx:if="{{product.brand}}">
+            <icon type="shop" size="14" color="#95a5a6" />
+            <text>品牌: {{product.brand}}</text>
+          </view>
+          <view class="meta-item" wx:if="{{product.productionDate}}">
+            <icon type="calendar" size="14" color="#95a5a6" />
+            <text>生产日期: {{product.productionDate}}</text>
+          </view>
+          <view class="meta-item" wx:if="{{product.expireDate}}">
+            <icon type="warning" size="14" color="#95a5a6" />
+            <text>保质期至: {{product.expireDate}}</text>
+          </view>
+        </view>
+
+        <!-- 风险等级 -->
+        <view class="risk-level" wx:if="{{product.riskLevel > 0}}">
+          <view class="level-header">
+            <icon type="warn" size="16" color="#e74c3c" />
+            <text class="level-title">风险等级</text>
+          </view>
+          <view class="level-content">
+            <view class="level-indicator">
+              <view 
+                class="level-bar {{product.riskLevel >= 1 ? 'active' : ''}} {{product.riskLevel === 1 ? 'current' : ''}}"
+              >低</view>
+              <view 
+                class="level-bar {{product.riskLevel >= 2 ? 'active' : ''}} {{product.riskLevel === 2 ? 'current' : ''}}"
+              >中</view>
+              <view 
+                class="level-bar {{product.riskLevel >= 3 ? 'active' : ''}} {{product.riskLevel === 3 ? 'current' : ''}}"
+              >高</view>
+            </view>
+          </view>
+        </view>
+      </view>
+    </view>
+
+    <!-- 风险提示卡片 -->
+    <view class="warning-card" wx:if="{{product.safetyStatus === 'RISK'}}">
+      <view class="warning-header">
+        <icon type="warn" size="20" color="#e74c3c" />
+        <text class="warning-title">⚠️ 风险提示</text>
+      </view>
+      <view class="warning-content">
+        <text class="warning-message">{{product.riskMsg || '检测到风险成分，建议谨慎食用'}}</text>
+        <view class="warning-tips">
+          <text class="tip-item">• 建议减少摄入频率</text>
+          <text class="tip-item">• 特殊人群（儿童、孕妇）请慎用</text>
+          <text class="tip-item">• 查看下方替代推荐</text>
+        </view>
+      </view>
+    </view>
+
+    <!-- 配料分析 -->
+    <view class="section-card">
+      <view class="section-header">
+        <view class="section-title-line">
+          <icon type="list" size="18" color="#2ecc71" />
+          <text class="section-title">配料分析</text>
+        </view>
+        <text class="section-count">
+          共 {{product.ingredientList ? product.ingredientList.length : 0}} 种成分
+        </text>
+      </view>
+      
+      <view class="ingredients-container">
+        <block wx:for="{{product.ingredientList}}" wx:key="index">
+          <view class="ingredient-row" data-index="{{index}}" bindtap="showIngredientDetail">
+            <view class="ingredient-main">
+              <text class="ingredient-index">{{index + 1}}.</text>
+              <text class="ingredient-name {{item.risk ? 'risk-name' : ''}}">
+                {{item.name}}
+              </text>
+              <view class="ingredient-additive" wx:if="{{item.isAdditive}}">
+                <text class="additive-tag">添加剂</text>
+              </view>
+            </view>
+            <view class="ingredient-tags">
+              <view class="ingredient-tag {{getRiskTagClass(item)}}">
+                {{getRiskTagText(item)}}
+              </view>
+              <view class="ingredient-tag allergen-tag" wx:if="{{isAllergen(item)}}">
+                过敏原
+              </view>
+              <icon type="right" size="14" color="#ddd" />
+            </view>
+          </view>
+          <view class="divider" wx:if="{{index < product.ingredientList.length - 1}}"></view>
+        </block>
+      </view>
+
+      <!-- 风险成分统计 -->
+      <view class="risk-stats" wx:if="{{riskCount > 0}}">
+        <view class="stat-item">
+          <text class="stat-value">{{riskCount}}</text>
+          <text class="stat-label">个风险成分</text>
+        </view>
+        <view class="stat-item">
+          <text class="stat-value">{{additiveCount}}</text>
+          <text class="stat-label">种添加剂</text>
+        </view>
+        <view class="stat-item">
+          <text class="stat-value">{{allergenCount}}</text>
+          <text class="stat-label">种过敏原</text>
+        </view>
+      </view>
+    </view>
+
+    <!-- 营养成分 -->
+    <view class="section-card" wx:if="{{product.nutrition && product.nutrition.length > 0}}">
+      <view class="section-header">
+        <view class="section-title-line">
+          <icon type="filter" size="18" color="#2ecc71" />
+          <text class="section-title">营养成分 (每100g)</text>
+        </view>
+        <text class="section-hint">NRV%: 营养素参考值百分比</text>
+      </view>
+      
+      <view class="nutrition-table">
+        <view class="table-header">
+          <text class="header-cell">营养成分</text>
+          <text class="header-cell">含量</text>
+          <text class="header-cell">NRV%</text>
+          <text class="header-cell">状态</text>
+        </view>
+        
+        <block wx:for="{{product.nutrition}}" wx:key="name">
+          <view class="nutrition-row {{item.highlight ? 'highlight-row' : ''}}">
+            <text class="nutrient-name">{{item.name}}</text>
+            <text class="nutrient-value">{{item.value}}{{item.unit}}</text>
+            <view class="nutrient-percent">
+              <text class="percent-value">{{item.percent}}%</text>
+              <view class="percent-bar">
+                <view 
+                  class="percent-fill {{item.percent > 100 ? 'over-limit' : ''}}"
+                  style="width: {{Math.min(item.percent, 100)}}%"
+                ></view>
+              </view>
+            </view>
+            <view class="nutrient-status">
+              <text class="status-text {{getNutritionStatus(item)}}">
+                {{getNutritionStatusText(item)}}
+              </text>
+            </view>
+          </view>
+        </block>
+      </view>
+      
+      <!-- 营养提示 -->
+      <view class="nutrition-tips">
+        <text class="tip-title">💡 营养小贴士</text>
+        <text class="tip-content">
+          {{getNutritionTip()}}
+        </text>
+      </view>
+    </view>
+
+    <!-- 类似产品推荐 -->
+    <view class="section-card" wx:if="{{similarProducts.length > 0}}">
+      <view class="section-header">
+        <view class="section-title-line">
+          <icon type="shop" size="18" color="#2ecc71" />
+          <text class="section-title">健康替代推荐</text>
+        </view>
+        <text class="section-hint">更安全的同类产品</text>
+      </view>
+      
+      <scroll-view class="similar-list" scroll-x>
+        <block wx:for="{{similarProducts}}" wx:key="id">
+          <view class="similar-item" data-id="{{item.id}}" bindtap="viewSimilarProduct">
+            <image class="similar-image" src="{{item.image}}" mode="aspectFill" />
+            <view class="similar-info">
+              <text class="similar-name">{{item.name}}</text>
+              <view class="similar-safety safe-badge">
+                <icon type="success" size="12" />
+                <text>更安全</text>
+              </view>
+              <view class="similar-reason">
+                <text class="reason-text">{{item.reason}}</text>
+              </view>
+            </view>
+          </view>
+        </block>
+      </scroll-view>
+    </view>
+
+    <!-- 检测信息 -->
+    <view class="section-card">
+      <view class="section-header">
+        <view class="section-title-line">
+          <icon type="info" size="18" color="#2ecc71" />
+          <text class="section-title">检测信息</text>
+        </view>
+      </view>
+      
+      <view class="info-grid">
+        <view class="info-item">
+          <text class="info-label">检测时间</text>
+          <text class="info-value">{{product.updateTime || '未知'}}</text>
+        </view>
+        <view class="info-item">
+          <text class="info-label">数据来源</text>
+          <text class="info-value">食品安全数据库 v1.0</text>
+        </view>
+        <view class="info-item">
+          <text class="info-label">检测版本</text>
+          <text class="info-value">AI分析引擎 v2.1</text>
+        </view>
+        <view class="info-item">
+          <text class="info-label">更新周期</text>
+          <text class="info-value">每月更新</text>
+        </view>
+      </view>
+    </view>
+
+    <!-- 用户反馈 -->
+    <view class="feedback-section">
+      <text class="feedback-title">信息准确吗？</text>
+      <view class="feedback-buttons">
+        <button 
+          class="feedback-btn accurate" 
+          data-type="accurate"
+          bindtap="submitFeedback"
+        >
+          <icon type="success" size="14" />
+          准确
+        </button>
+        <button 
+          class="feedback-btn inaccurate" 
+          data-type="inaccurate"
+          bindtap="submitFeedback"
+        >
+          <icon type="warn" size="14" />
+          有误
+        </button>
+      </view>
+    </view>
+  </scroll-view>
+
+  <!-- 底部操作栏 -->
+  <view class="action-bar">
+    <view class="action-btn secondary" bindtap="addToShoppingList">
+      <icon type="cart" size="18" />
+      <text>加入清单</text>
+    </view>
+    <view class="action-btn secondary" bindtap="checkSimilar">
+      <icon type="search" size="18" />
+      <text>找替代</text>
+    </view>
+    <view class="action-btn primary" bindtap="saveProduct">
+      <icon type="star" size="18" />
+      <text>{{isFavorite ? '已收藏' : '收藏'}}</text>
+    </view>
+  </view>
+
+  <!-- 加载动画 -->
+  <view class="loading-overlay" wx:if="{{loading}}">
+    <view class="loading-content">
+      <view class="spinner"></view>
+      <text class="loading-text">正在获取商品信息...</text>
+    </view>
+  </view>
+
+  <!-- 配料详情弹窗 -->
+  <view class="ingredient-modal" wx:if="{{showIngredientModal}}">
+    <view class="modal-mask" bindtap="closeIngredientModal"></view>
+    <view class="modal-content">
+      <view class="modal-header">
+        <text class="modal-title">配料详情</text>
+        <icon 
+          type="cancel" 
+          size="20" 
+          color="#95a5a6" 
+          bindtap="closeIngredientModal"
+        />
+      </view>
+      <scroll-view class="modal-body" scroll-y>
+        <view class="ingredient-detail">
+          <text class="detail-name">{{currentIngredient.name}}</text>
+          <view class="detail-tags">
+            <view class="detail-tag {{currentIngredient.risk ? 'risk-tag' : 'safe-tag'}}">
+              {{currentIngredient.risk ? '风险成分' : '安全成分'}}
+            </view>
+            <view class="detail-tag type-tag" wx:if="{{currentIngredient.type}}">
+              {{currentIngredient.type}}
+            </view>
+          </view>
+          <view class="detail-info">
+            <text class="info-title">说明：</text>
+            <text class="info-content">
+              {{currentIngredient.description || '暂无详细说明'}}
+            </text>
+          </view>
+          <view class="detail-risk" wx:if="{{currentIngredient.risk}}">
+            <text class="risk-title">⚠️ 风险提示：</text>
+            <text class="risk-content">
+              {{currentIngredient.riskInfo || '长期过量摄入可能对健康造成影响'}}
+            </text>
+          </view>
+          <view class="detail-source">
+            <text class="source-text">数据来源：国家食品安全风险评估中心</text>
+          </view>
+        </view>
+      </scroll-view>
+      <view class="modal-footer">
+        <button class="modal-btn" bindtap="closeIngredientModal">知道了</button>
+      </view>
+    </view>
+  </view>
+</view>
