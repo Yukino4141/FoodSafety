@@ -50,8 +50,8 @@ food-safety:
     access-key-secret: ${food-safety.alioss.access-key-secret}
     bucket-name: ${food-safety.alioss.bucket-name}
   wechat:
-    appid: ${food-safety.wechat.appid}
-    secret: ${food-safety.wechat.secret}
+    appid: wx6d967f084becd6f3
+    secret: aeafa238a64b98fe4858b61d7c2ac098
   ai:
     api-url: ${food-safety.ai.api-url}
     api-key: ${food-safety.ai.api-key}
