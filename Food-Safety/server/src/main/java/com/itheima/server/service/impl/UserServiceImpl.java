@@ -105,6 +105,11 @@ public class UserServiceImpl implements UserService {
         String json = HttpClientUtil.doGet(WX_LOGIN_URL, params);
         log.info("微信接口返回: {}", json);
 
+        log.info("准备调用微信 jscode2session");
+        log.info("使用的 appid : {}", appid);               // ← 关键！看这里是不是 null 或错的
+        log.info("使用的 secret 长度: {}", secret == null ? "null" : secret.length());
+        log.info("传入的 code: {}", code);
+
         JSONObject jsonObject = JSON.parseObject(json);
         String openid = jsonObject.getString("openid");
         

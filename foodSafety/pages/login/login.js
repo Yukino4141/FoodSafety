@@ -294,10 +294,11 @@ Page({
 
   // 切换协议同意状态
   toggleAgreement(e) {
-    console.log('协议状态变更:', e.detail.value);
-    console.log('是否勾选：', isAgreed); // 勾选时应输出 true
+    console.log('协议状态变更:', e.detail.value);    
     // 修正：判断数组是否包含"agree"，转为布尔值
     const isAgreed = e.detail.value.includes('agree');
+    console.log('是否勾选：', isAgreed); // 勾选时应输出 true
+
     this.setData({
       agreed: isAgreed // 此时agreed才是true/false
     });
