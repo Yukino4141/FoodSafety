@@ -55,4 +55,11 @@ public class ScanHistoryController {
         
         return Result.success("清空成功");
     }
+
+    @DeleteMapping("/{id}")
+    @ApiOperation("删除单条扫描历史")
+    public Result<String> deleteOne(@PathVariable Long id) {
+        scanHistoryService.deleteById(id);
+        return Result.success("删除成功");
+    }
 }

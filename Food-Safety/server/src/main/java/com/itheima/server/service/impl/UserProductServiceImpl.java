@@ -25,6 +25,7 @@ import java.time.LocalDateTime;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 /**
@@ -145,6 +146,27 @@ public class UserProductServiceImpl implements UserProductService {
             productFavoriteMapper.delete(existing.getId());
             return false;
         }
+    }
+
+    @Override
+    public PageResult favoriteList(Integer page, Integer pageSize) {
+        Long userId = BaseContext.getCurrentId();
+        PageHelper.startPage(page, pageSize);
+        Page<ProductFavorite> favPage = (Page<ProductFavorite>) productFavoriteMapper.listByUserId(userId);
+        List<ProductVO> records = favPage.getResult().stream()
+                .map(fav -> {
+                    Product product = productMapper.getById(fav.getProductId());
+                    if (product == null) {
+                        return null;
+                    }
+                    ProductVO vo = convertToVO(product);
+                    applyPersonalRisk(vo, product);
+                    vo.setIsFavorite(true);
+                    return vo;
+                })
+                .filter(java.util.Objects::nonNull)
+                .collect(Collectors.toList());
+        return new PageResult(favPage.getTotal(), records);
     }
 
     /**

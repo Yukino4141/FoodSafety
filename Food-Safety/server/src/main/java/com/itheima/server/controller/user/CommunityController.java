@@ -2,8 +2,11 @@ package com.itheima.server.controller.user;
 
 import com.itheima.common.result.PageResult;
 import com.itheima.common.result.Result;
+import com.itheima.pojo.dto.CommentDTO;
 import com.itheima.pojo.dto.LikeDTO;
 import com.itheima.pojo.dto.PostDTO;
+import com.itheima.pojo.vo.CommentVO;
+import com.itheima.pojo.vo.PostVO;
 import com.itheima.server.service.CommunityService;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
@@ -40,5 +43,32 @@ public class CommunityController {
     public Result<String> like(@RequestBody LikeDTO dto) {
         communityService.like(dto);
         return Result.success("success");
+    }
+
+    @GetMapping("/{id}")
+    @ApiOperation("帖子详情")
+    public Result<PostVO> detail(@PathVariable Long id) {
+        return Result.success(communityService.detail(id));
+    }
+
+    @GetMapping("/my-posts")
+    @ApiOperation("我的帖子")
+    public Result<PageResult> myPosts(@RequestParam(defaultValue = "1") Integer page,
+                                      @RequestParam(defaultValue = "10") Integer pageSize) {
+        return Result.success(communityService.myPosts(page, pageSize));
+    }
+
+    @PostMapping("/comment")
+    @ApiOperation("发表评论")
+    public Result<Long> comment(@RequestBody CommentDTO dto) {
+        return Result.success(communityService.comment(dto));
+    }
+
+    @GetMapping("/comment/list")
+    @ApiOperation("评论列表")
+    public Result<PageResult> commentList(@RequestParam Long postId,
+                                          @RequestParam(defaultValue = "1") Integer page,
+                                          @RequestParam(defaultValue = "10") Integer pageSize) {
+        return Result.success(communityService.commentList(postId, page, pageSize));
     }
 }

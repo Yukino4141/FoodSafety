@@ -34,7 +34,8 @@ public interface ScanHistoryMapper {
      * 根据 ID 删除扫描历史
      * @param id 历史记录ID
      */
-    void deleteById(Long id);
+    @org.apache.ibatis.annotations.Delete("delete from scan_history where id = #{id} and user_id = #{userId}")
+    int deleteById(Long id, Long userId);
 
     /**
      * 清空用户的所有扫描历史

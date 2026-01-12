@@ -3,11 +3,6 @@
         "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
 <mapper namespace="com.itheima.server.mapper.ScanHistoryMapper">
 
-    <!-- 根据ID删除历史记录 -->
-    <delete id="deleteById">
-        DELETE FROM scan_history WHERE id = #{id}
-    </delete>
-
     <!-- 清空用户的所有扫描历史 -->
     <delete id="deleteByUserId">
         DELETE FROM scan_history WHERE user_id = #{userId}

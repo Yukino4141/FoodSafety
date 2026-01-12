@@ -16,4 +16,10 @@ public interface CommunityPostMapper {
     CommunityPost getById(Long id);
 
     void updateLikeCount(Long id, Integer likeCount);
+
+    @org.apache.ibatis.annotations.Select("select * from community_post where user_id = #{userId} order by create_time desc")
+    List<CommunityPost> listByUserId(Long userId);
+
+    @org.apache.ibatis.annotations.Update("update community_post set view_count = #{viewCount} where id = #{id}")
+    int updateViewCount(Long id, Integer viewCount);
 }

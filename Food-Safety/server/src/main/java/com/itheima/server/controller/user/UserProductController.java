@@ -71,4 +71,11 @@ public class UserProductController {
         boolean favor = userProductService.toggleFavorite(dto.getProductId());
         return Result.success(favor);
     }
+
+    @GetMapping("/favorite/list")
+    @ApiOperation("我的收藏列表")
+    public Result<PageResult> favoriteList(@RequestParam(defaultValue = "1") Integer page,
+                                           @RequestParam(defaultValue = "10") Integer pageSize) {
+        return Result.success(userProductService.favoriteList(page, pageSize));
+    }
 }

@@ -92,4 +92,49 @@ public class InventoryServiceImpl implements InventoryService {
 
         return new PageResult(pageData.getTotal(), items);
     }
+
+    @Override
+    public void updateInventory(Long id, InventoryDTO dto) {
+        Long userId = BaseContext.getCurrentId();
+        ProductInventory record = productInventoryMapper.getByIdAndUser(id, userId);
+        if (record == null) {
+            throw new RuntimeException("库存记录不存在或无权限");
+        }
+        record.setPurchaseDate(dto.getPurchaseDate());
+        record.setExpiryDate(dto.getExpiryDate());
+        int status = computeStatus(dto.getExpiryDate());
+        record.setStatus(status);
+        productInventoryMapper.update(record);
+    }
+
+    @Override
+    public void consume(Long id) {
+        Long userId = BaseContext.getCurrentId();
+        ProductInventory record = productInventoryMapper.getByIdAndUser(id, userId);
+        if (record == null) {
+            throw new RuntimeException("库存记录不存在或无权限");
+        }
+        record.setStatus(4);
+        productInventoryMapper.update(record);
+    }
+
+    @Override
+    public void delete(Long id) {
+        Long userId = BaseContext.getCurrentId();
+        int rows = productInventoryMapper.deleteByIdAndUser(id, userId);
+        if (rows == 0) {
+            throw new RuntimeException("库存记录不存在或无权限");
+        }
+    }
+
+    private int computeStatus(java.time.LocalDate expiryDate) {
+        int remaining = (int) java.time.temporal.ChronoUnit.DAYS.between(java.time.LocalDate.now(), expiryDate);
+        if (remaining < 0) {
+            return 3;
+        } else if (remaining < 7) {
+            return 2;
+        } else {
+            return 1;
+        }
+    }
 }

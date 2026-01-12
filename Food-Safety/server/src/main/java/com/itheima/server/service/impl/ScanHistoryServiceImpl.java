@@ -94,6 +94,15 @@ public class ScanHistoryServiceImpl implements ScanHistoryService {
         log.info("清空扫描历史，用户ID: {}", userId);
     }
 
+    @Override
+    public void deleteById(Long id) {
+        Long userId = BaseContext.getCurrentId();
+        int rows = scanHistoryMapper.deleteById(id, userId);
+        if (rows == 0) {
+            throw new RuntimeException("记录不存在或无权限");
+        }
+    }
+
     /**
      * 将 Product 实体转换为 ProductVO
      * @param product 商品实体

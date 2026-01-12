@@ -28,6 +28,11 @@ public interface ScanHistoryService {
      * 清空当前用户的扫描历史
      */
     void clearMyHistory();
+
+    /**
+     * 删除单条扫描历史
+     */
+    void deleteById(Long id);
     
     /**
      * 获取今日扫码数

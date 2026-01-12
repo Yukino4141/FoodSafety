@@ -13,4 +13,7 @@ public interface ProductFavoriteMapper {
     void insert(ProductFavorite favorite);
 
     void delete(Long id);
+
+    @Select("SELECT * FROM product_favorite WHERE user_id = #{userId} ORDER BY create_time DESC")
+    java.util.List<ProductFavorite> listByUserId(Long userId);
 }

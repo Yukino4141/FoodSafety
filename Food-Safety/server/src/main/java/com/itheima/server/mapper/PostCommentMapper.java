@@ -15,4 +15,14 @@ public interface PostCommentMapper {
      */
     @Select("SELECT COUNT(*) FROM community_post")
     Integer getPendingPosts();
+
+    @org.apache.ibatis.annotations.Insert("insert into post_comment(post_id, user_id, content, create_time) values(#{postId}, #{userId}, #{content}, #{createTime})")
+    @org.apache.ibatis.annotations.Options(useGeneratedKeys = true, keyProperty = "id")
+    void insert(com.itheima.pojo.entity.PostComment comment);
+
+    @org.apache.ibatis.annotations.Select("select * from post_comment where post_id = #{postId} order by create_time desc")
+    java.util.List<com.itheima.pojo.entity.PostComment> listByPostId(Long postId);
+
+    @org.apache.ibatis.annotations.Select("select count(*) from post_comment where post_id = #{postId}")
+    Long countByPostId(Long postId);
 }

@@ -33,4 +33,9 @@ public interface UserProductService {
      * @return 当前是否已收藏
      */
     boolean toggleFavorite(Long productId);
+
+    /**
+     * 我的收藏列表
+     */
+    PageResult favoriteList(Integer page, Integer pageSize);
 }
