@@ -20,6 +20,8 @@ public class InventoryItemVO implements Serializable {
     private String image;
     @JsonFormat(pattern = "yyyy-MM-dd")
     private LocalDate expiryDate;
+    @JsonFormat(pattern = "yyyy-MM-dd")
+    private LocalDate purchaseDate;
     private Integer remainingDays;
     private Integer status;
     private String statusMsg;

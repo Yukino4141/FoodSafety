@@ -79,6 +79,7 @@ public class InventoryServiceImpl implements InventoryService {
                             .productId(record.getProductId())
                             .productName(product.getName())
                             .image(product.getImage())
+                            .purchaseDate(record.getPurchaseDate())
                             .expiryDate(record.getExpiryDate())
                             .remainingDays(remaining)
                             .status(computedStatus)
