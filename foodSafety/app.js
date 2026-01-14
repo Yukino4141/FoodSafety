@@ -608,7 +608,7 @@ processProductData(productData) {
             const responseData = res.data;
             
             if (responseData.code === 1) {
-              resolve(responseData.records || []);
+              resolve(responseData.data.records || []);
             } else if (responseData.code === 0) {
               resolve([]); // 无历史记录时返回空数组
             } else {
@@ -1306,6 +1306,26 @@ deleteScanHistory(id) {
     
     return result;
   },
+  // app.js 中添加消耗库存商品的方法
+// 标记库存商品为已消耗
+async consumeInventoryItem(inventoryId) {
+  console.log('标记库存商品为已消耗，ID:', inventoryId);
+  
+  const token = wx.getStorageSync('token');
+  if (!token) {
+    throw new Error('请先登录');
+  }
+  
+  try {
+    const result = await this.request(`/user/inventory/${inventoryId}/consume`, 'PATCH');
+    console.log('标记消耗成功:', result);
+    return result;
+    
+  } catch (error) {
+    console.error('标记消耗失败:', error);
+    throw error;
+  }
+},
 
  // ==================== 社区互动功能（仅现有API） ====================
 
