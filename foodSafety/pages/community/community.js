@@ -24,7 +24,15 @@ Page({
     
     // 空状态提示
     emptyMessage: '暂无内容',
-    emptySubMessage: '发布第一条内容吧'
+    emptySubMessage: '发布第一条内容吧',
+    
+    // 评论相关
+    commentContent: '',
+    showCommentInput: false,
+    currentPostId: null,
+    comments: [],
+    loadingComments: false,
+    showComments: false
   },
 
   onLoad() {
@@ -258,5 +266,210 @@ Page({
       current: images[index],
       urls: images
     });
+  },
+
+  // ============ 新增功能：根据接口文档 ============
+
+  // 跳转到帖子详情页
+  navigateToPostDetail(e) {
+    const postId = e.currentTarget.dataset.id;
+    if (!postId) return;
+    
+    wx.navigateTo({
+      url: `/pages/community/detail/detail?id=${postId}`
+    });
+  },
+
+  // 查看我的帖子
+  viewMyPosts() {
+    if (!this.data.isLoggedIn) {
+      this.showLoginPrompt();
+      return;
+    }
+    
+    wx.navigateTo({
+      url: '/pages/community/my-posts/my-posts'
+    });
+  },
+
+  // 显示评论输入框
+  showCommentInput(e) {
+    const postId = e.currentTarget.dataset.id;
+    const index = e.currentTarget.dataset.index;
+    
+    if (!this.data.isLoggedIn) {
+      this.showLoginPrompt();
+      return;
+    }
+    
+    this.setData({
+      showCommentInput: true,
+      currentPostId: postId,
+      commentContent: '',
+      currentPostIndex: index
+    });
+  },
+
+  // 隐藏评论输入框
+  hideCommentInput() {
+    this.setData({
+      showCommentInput: false,
+      currentPostId: null,
+      commentContent: ''
+    });
+  },
+
+  // 输入评论内容
+  onCommentInput(e) {
+    this.setData({
+      commentContent: e.detail.value
+    });
+  },
+
+  // 提交评论
+  async submitComment() {
+    const { currentPostId, commentContent } = this.data;
+    
+    if (!commentContent.trim()) {
+      wx.showToast({
+        title: '请输入评论内容',
+        icon: 'none'
+      });
+      return;
+    }
+    
+    try {
+      // 调用提交评论接口
+      const result = await app.apiRequest('POST', '/user/community/comment', {
+        postId: currentPostId,
+        content: commentContent
+      });
+      
+      if (result.code === 1) {
+        wx.showToast({
+          title: '评论成功',
+          icon: 'success'
+        });
+        
+        // 更新帖子评论数
+        const { currentPostIndex, posts } = this.data;
+        if (currentPostIndex !== undefined && posts[currentPostIndex]) {
+          const newCommentCount = (posts[currentPostIndex].commentCount || 0) + 1;
+          this.setData({
+            [`posts[${currentPostIndex}].commentCount`]: newCommentCount
+          });
+        }
+        
+        // 关闭输入框
+        this.hideCommentInput();
+        
+        // 如果有需要，重新加载评论列表
+        if (this.data.showComments && this.data.currentPostId === currentPostId) {
+          this.loadComments(currentPostId);
+        }
+      } else {
+        throw new Error(result.msg || '评论失败');
+      }
+      
+    } catch (error) {
+      console.error('提交评论失败:', error);
+      wx.showToast({
+        title: error.message || '评论失败',
+        icon: 'none'
+      });
+    }
+  },
+
+  // 查看评论列表
+  async viewComments(e) {
+    const postId = e.currentTarget.dataset.id;
+    const index = e.currentTarget.dataset.index;
+    
+    if (!postId) return;
+    
+    // 如果已经显示，则隐藏
+    if (this.data.showComments && this.data.currentPostId === postId) {
+      this.setData({
+        showComments: false,
+        currentPostId: null,
+        comments: []
+      });
+      return;
+    }
+    
+    this.setData({
+      loadingComments: true,
+      showComments: true,
+      currentPostId: postId,
+      currentPostIndex: index
+    });
+    
+    await this.loadComments(postId);
+    
+    this.setData({
+      loadingComments: false
+    });
+  },
+
+  // 加载评论列表
+  async loadComments(postId) {
+    try {
+      const result = await app.request('GET', '/user/community/comment/list', {
+        postId: postId,
+        page: 1,
+        pageSize: 10
+      });
+      
+      if (result.code === 1) {
+        this.setData({
+          comments: result.data.records || []
+        });
+      } else {
+        throw new Error(result.msg || '加载评论失败');
+      }
+      
+    } catch (error) {
+      console.error('加载评论失败:', error);
+      wx.showToast({
+        title: '加载评论失败',
+        icon: 'none'
+      });
+      this.setData({
+        comments: []
+      });
+    }
+  },
+
+  // 加载更多评论
+  async loadMoreComments() {
+    if (!this.data.hasMoreComments || this.data.loadingMoreComments) {
+      return;
+    }
+    
+    this.setData({ loadingMoreComments: true });
+    
+    const nextPage = (this.data.commentPage || 1) + 1;
+    
+    try {
+      const result = await app.request('GET', '/user/community/comment/list', {
+        postId: this.data.currentPostId,
+        page: nextPage,
+        pageSize: 10
+      });
+      
+      if (result.code === 1) {
+        const newComments = [...this.data.comments, ...(result.data.records || [])];
+        this.setData({
+          comments: newComments,
+          commentPage: nextPage,
+          hasMoreComments: result.data.total > newComments.length,
+          loadingMoreComments: false
+        });
+      }
+      
+    } catch (error) {
+      console.error('加载更多评论失败:', error);
+      this.setData({ loadingMoreComments: false });
+    }
   }
 });

@@ -40,7 +40,7 @@
       </view>
       <textarea 
         class="ingredients-input"
-        placeholder="例如：&#10;水&#10;白砂糖&#10;植脂末&#10;代可可脂&#10;..."
+        placeholder="例如：\n水\n白砂糖\n植脂末\n代可可脂\n..."
         value="{{ingredientsText}}"
         bindinput="onIngredientsInput"
         maxlength="1000"

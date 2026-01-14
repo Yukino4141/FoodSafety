@@ -24,6 +24,9 @@ Page({
     // 家庭成员编辑相关
     showAddFamily: false,
     editingMember: null,
+    showMemberOptions: false,
+    selectedMemberId: null,
+    selectedMemberName: '',
     // 新增家庭成员表单数据
     newMember: {
       name: '',
@@ -57,7 +60,7 @@ Page({
         { name: '芝麻', selected: false }
       ],
       dietTypes: [
-        { name: '正常', value: 'normal' },
+        { name: '正常', value: '正常' },
         { name: '低糖', value: '低糖' },
         { name: '低盐', value: '低盐' },
         { name: '低脂', value: '低脂' },
@@ -86,15 +89,15 @@ Page({
     showGuide: false,
     // 更新菜单项
     menuItems: [
-      {
-        id: 1,
-        text: '健康档案',
-        desc: '设置饮食偏好和过敏信息',
-        icon: '📋',
-        color: 'green',
-        event: 'editProfile',
-        badge: 0
-      },
+      // {
+      //   id: 1,
+      //   text: '健康档案',
+      //   desc: '设置饮食偏好和过敏信息',
+      //   icon: '📋',
+      //   color: 'green',
+      //   event: 'editProfile',
+      //   badge: 0
+      // },
       {
         id: 2,
         text: '家庭成员',
@@ -104,15 +107,15 @@ Page({
         event: 'showFamilyList',
         badge: 0
       },
-      {
-        id: 3,
-        text: '检测历史',
-        desc: '查看所有检测记录',
-        icon: '📚',
-        color: 'orange',
-        url: '/pages/history/history',
-        badge: 3
-      },
+      // {
+      //   id: 3,
+      //   text: '检测历史',
+      //   desc: '查看所有检测记录',
+      //   icon: '📚',
+      //   color: 'orange',
+      //   url: '/pages/history/history',
+      //   badge: 3
+      // },
       {
         id: 4,
         text: '我的收藏',
@@ -168,43 +171,146 @@ Page({
       });
     }
   },
+  
+  // 去重历史记录方法
+  deduplicateHistory(historyList) {
+    if (!Array.isArray(historyList) || historyList.length === 0) {
+      return [];
+    }
+    
+    console.log('profile去重开始，原始数据条数:', historyList.length);
+    
+    // 使用Map来去重，key为商品ID + 条形码的组合
+    const uniqueMap = new Map();
+    
+    historyList.forEach(item => {
+      // 构建唯一标识符
+      const key = this.generateHistoryKey(item);
+      
+      if (key) {
+        const existingItem = uniqueMap.get(key);
+        if (existingItem) {
+          // 比较扫描时间，保留最新的
+          const existingTime = this.parseDate(existingItem.updateTime || existingItem.scanTime);
+          const currentTime = this.parseDate(item.updateTime || item.scanTime);
+          
+          if (currentTime > existingTime) {
+            uniqueMap.set(key, item);
+            console.log(`替换重复项: ${item.name} (${key})`);
+          }
+        } else {
+          uniqueMap.set(key, item);
+        }
+      }
+    });
+    
+    const deduplicatedList = Array.from(uniqueMap.values());
+    console.log('profile去重完成，剩余条数:', deduplicatedList.length);
+    
+    return deduplicatedList;
+  },
+
+  // 生成历史记录的唯一键
+  generateHistoryKey(item) {
+    // 优先使用商品ID
+    if (item.id || item.productId) {
+      const productId = item.id || item.productId;
+      return `id_${productId}`;
+    }
+    
+    // 其次使用条形码
+    if (item.barcode) {
+      return `barcode_${item.barcode}`;
+    }
+    
+    // 最后使用商品名称（可能不准确）
+    if (item.name) {
+      return `name_${item.name}`;
+    }
+    
+    // 如果都没有，返回null
+    console.warn('无法生成历史记录键，缺少标识信息:', item);
+    return null;
+  },
+
+  // 解析日期字符串为时间戳
+  parseDate(dateString) {
+    if (!dateString) return 0;
+    
+    try {
+      const date = new Date(dateString);
+      return date.getTime();
+    } catch (error) {
+      console.error('解析日期失败:', error);
+      return 0;
+    }
+  },
 
   // 加载用户统计
   async loadUserStats() {
     try {
+      // 获取历史记录
       const history = await app.getScanHistory();
+      console.log('个人主页获取到原始历史记录:', history.length, '条');
       
-      const riskCount = history.filter(item => 
-        item.safetyStatus === 'RISK'
-      ).length;
+      // ========== 去重处理 ==========
+      const deduplicatedHistory = this.deduplicateHistory(history);
+      console.log('个人主页去重后历史记录:', deduplicatedHistory.length, '条');
+      
+      // 统计风险商品数量
+      const riskCount = deduplicatedHistory.filter(item => {
+        // 使用安全状态判断，兼容不同的数据格式
+        const safetyStatus = item.safetyStatus || item.safetyInfo?.status;
+        return safetyStatus === 'RISK' || safetyStatus === 'DANGER' || 
+              (item.riskLevel && item.riskLevel > 0) || 
+              (item.hasRisk === true);
+      }).length;
+      
+      // 统计安全商品数量
+      const safeCount = deduplicatedHistory.length - riskCount;
+      
+      // 获取收藏数量
+      const favorites = wx.getStorageSync('favorites') || [];
       
       this.setData({
         stats: {
-          totalScan: history.length,
+          totalScan: deduplicatedHistory.length,
           riskCount: riskCount,
-          safeCount: history.length - riskCount,
-          favoriteCount: (wx.getStorageSync('favorites') || []).length
+          safeCount: safeCount,
+          favoriteCount: favorites.length
         }
       });
+      
+      console.log('个人主页统计数据:', this.data.stats);
       
     } catch (error) {
       console.error('加载统计数据失败:', error);
       
-      // 使用本地数据
+      // 使用本地数据作为后备方案
       const localHistory = wx.getStorageSync('localScanHistory') || [];
+      
+      // 本地数据也要去重
+      const deduplicatedLocalHistory = this.deduplicateHistory(localHistory);
+      
+      const localRiskCount = deduplicatedLocalHistory.filter(item => {
+        const safetyStatus = item.safetyStatus || item.safetyInfo?.status;
+        return safetyStatus === 'RISK' || safetyStatus === 'DANGER' || 
+              (item.riskLevel && item.riskLevel > 0) || 
+              (item.hasRisk === true);
+      }).length;
+      
       const favorites = wx.getStorageSync('favorites') || [];
-      const localRiskCount = localHistory.filter(item => 
-        item.safetyStatus === 'RISK'
-      ).length;
       
       this.setData({
         stats: {
-          totalScan: localHistory.length,
+          totalScan: deduplicatedLocalHistory.length,
           riskCount: localRiskCount,
-          safeCount: localHistory.length - localRiskCount,
+          safeCount: deduplicatedLocalHistory.length - localRiskCount,
           favoriteCount: favorites.length
         }
       });
+      
+      console.log('个人主页使用本地缓存统计数据:', this.data.stats);
     }
   },
 
@@ -215,19 +321,19 @@ Page({
       
       const res = await app.request('/user/profile', 'GET');
       wx.hideLoading();
-
-      if (res.code === 1 && res.data) {
+      console.log("profile",res);
+      if (res !== undefined) {
         this.setData({
           userProfile: {
-            allergens: res.data.allergens || [],
-            dietType: res.data.dietType || '',
-            healthTags: res.data.healthTags || []
+            allergens: res.allergens || [],
+            dietType: res.dietType || '',
+            healthTags: res.healthTags || []
           }
         });
-        this.updateSelectOptions(res.data);
+        this.updateSelectOptions(res);
         
         // 更新菜单提示
-        if (res.data.allergens && res.data.allergens.length > 0) {
+        if (res.allergens && res.allergens.length > 0) {
           const menuItems = this.data.menuItems;
           menuItems[0].badge = 1;
           this.setData({ menuItems });
@@ -258,22 +364,22 @@ Page({
   async getFamilyMembers() {
     try {
       // 先尝试调用接口获取数据
-      const res = await app.request('/user/family', 'GET');
+      const res = await app.request('/user/family/list', 'GET');
       
-      if (res.code === 1 && res.data) {
+    if (res !== undefined) {
         this.setData({
-          familyMembers: res.data,
+          familyMembers: res,
           // 设置默认当前成员（第一个或用户自己）
-          currentMemberId: res.data[0]?.id || null
+          currentMemberId: res[0]?.id || null
         });
         
         // 更新菜单提示
         const menuItems = this.data.menuItems;
-        menuItems[1].badge = res.data.length > 0 ? res.data.length : 0;
+        menuItems[1].badge = res.length > 0 ? res.length : 0;
         this.setData({ menuItems });
         
         // 保存到本地缓存
-        wx.setStorageSync('familyMembers', res.data);
+        wx.setStorageSync('familyMembers', res);
       } else {
         // 如果接口无数据，使用本地缓存
         const localMembers = wx.getStorageSync('familyMembers') || [];
@@ -377,6 +483,101 @@ Page({
     }
   },
 
+  // 编辑家庭成员
+  async editFamilyMember(e) {
+    const memberId = e.currentTarget.dataset.id;
+    const member = this.data.familyMembers.find(m => m.id === memberId);
+    
+    if (!member) return;
+    
+    // 初始化编辑表单
+    const { familyHealthTags } = this.data;
+    const updatedTags = familyHealthTags.map(tag => ({
+      ...tag,
+      selected: member.healthTags?.includes(tag.name) || false
+    }));
+    
+    this.setData({
+      showAddFamily: true,
+      editingMember: member,
+      newMember: {
+        name: member.name,
+        age: member.age?.toString() || '',
+        healthTags: member.healthTags || []
+      },
+      familyHealthTags: updatedTags
+    });
+  },
+
+  // 保存家庭成员编辑（更新）
+  async saveFamilyMember() {
+    try {
+      const { editingMember, newMember } = this.data;
+      
+      // 验证必填字段
+      if (!newMember.name.trim()) {
+        wx.showToast({
+          title: '请输入成员昵称',
+          icon: 'none'
+        });
+        return;
+      }
+
+      wx.showLoading({ title: '保存中...', mask: true });
+
+      // 构建请求参数
+      const params = {
+        name: newMember.name.trim(),
+        age: newMember.age ? parseInt(newMember.age) : null,
+        healthTags: newMember.healthTags
+      };
+
+      // 调用后端更新接口
+      const res = await app.request(`/user/family/${editingMember.id}`, 'PUT', params);
+      
+      wx.hideLoading();
+
+      if (res === 'success') {
+        // 由于后端返回的data是"success"，我们需要重新获取列表
+        await this.getFamilyMembers();
+        
+        // 重置表单
+        this.setData({
+          showAddFamily: false,
+          editingMember: null,
+          newMember: {
+            name: '',
+            age: '',
+            healthTags: []
+          },
+          // 重置标签选中状态
+          'familyHealthTags': this.data.familyHealthTags.map(tag => ({
+            ...tag,
+            selected: false
+          }))
+        });
+
+        wx.showToast({
+          title: '更新成功',
+          icon: 'success',
+          duration: 2000
+        });
+      } else {
+        wx.showToast({
+          title: res.msg || '更新失败',
+          icon: 'none'
+        });
+      }
+      
+    } catch (error) {
+      wx.hideLoading();
+      console.error('更新家庭成员失败:', error);
+      wx.showToast({
+        title: '网络异常，请稍后重试',
+        icon: 'none'
+      });
+    }
+  },
   // 删除家庭成员
   async deleteFamilyMember(e) {
     const memberId = e.currentTarget.dataset.id;
@@ -395,7 +596,7 @@ Page({
             
             wx.hideLoading();
             
-            if (deleteRes.code === 1) {
+            if (deleteRes!== undefined) {
               // 从列表中移除
               const updatedMembers = this.data.familyMembers.filter(
                 member => member.id !== memberId
@@ -497,6 +698,19 @@ Page({
     });
   },
 
+  // 家庭成员表单提交
+  async handleFamilyFormSubmit() {
+    const { editingMember, newMember } = this.data;
+    
+    // 如果有 editingMember，说明是编辑模式，调用更新方法
+    if (editingMember) {
+      await this.saveFamilyMember();
+    } else {
+      // 否则是新增模式，调用新增方法
+      await this.addFamilyMember();
+    }
+  },
+
   // 家庭成员表单输入处理
   onMemberInput(e) {
     const field = e.currentTarget.dataset.field;
@@ -542,6 +756,7 @@ Page({
     this.setData({
       showFamilyList: true
     });
+    this.getFamilyMembers();
   },
 
   // 隐藏家庭成员列表
@@ -550,6 +765,68 @@ Page({
       showFamilyList: false
     });
   },
+
+  // 显示成员选项
+showMemberOptions(e) {
+  const memberId = e.currentTarget.dataset.id;
+  const memberName = e.currentTarget.dataset.name;
+  
+  this.setData({
+    showMemberOptions: true,
+    selectedMemberId: memberId,
+    selectedMemberName: memberName
+  });
+},
+
+// 隐藏成员选项
+hideMemberOptions() {
+  this.setData({
+    showMemberOptions: false,
+    selectedMemberId: null,
+    selectedMemberName: ''
+  });
+},
+
+// 编辑成员
+onEditMember() {
+  const memberId = this.data.selectedMemberId;
+  const member = this.data.familyMembers.find(m => m.id === memberId);
+  
+  if (member) {
+    // 隐藏选项弹窗
+    this.hideMemberOptions();
+    
+    // 延迟显示编辑表单，避免动画冲突
+    setTimeout(() => {
+      this.editFamilyMember({
+        currentTarget: {
+          dataset: { id: memberId }
+        }
+      });
+    }, 300);
+  }
+},
+
+// 删除成员
+onDeleteMember() {
+  const memberId = this.data.selectedMemberId;
+  const memberName = this.data.selectedMemberName;
+  
+  // 隐藏选项弹窗
+  this.hideMemberOptions();
+  
+  // 延迟执行删除操作
+  setTimeout(() => {
+    this.deleteFamilyMember({
+      currentTarget: {
+        dataset: { 
+          id: memberId,
+          name: memberName
+        }
+      }
+    });
+  }, 300);
+},
 
   // 其他已有方法保持不变...
   updateSelectOptions(profileData) {
@@ -849,7 +1126,7 @@ Page({
   },
 
   viewHistory() {
-    wx.switchTab({
+    wx.navigateTo({
       url: '/pages/history/history'
     });
   },

@@ -1,0 +1,141 @@
+<!-- pages/community/detail/detail.wxml -->
+<view class="post-detail-page">
+  <!-- 帖子主体 -->
+  <view class="post-card">
+    <!-- 用户信息 -->
+    <view class="user-info">
+      <image class="user-avatar" src="{{post.userAvatar}}" />
+      <view class="user-details">
+        <text class="user-name">{{post.userNickname}}</text>
+        <text class="post-time">{{post.displayTime}}</text>
+      </view>
+    </view>
+
+    <!-- 标题 -->
+    <view class="post-title" wx:if="{{post.title}}">
+      <text class="title-text">{{post.title}}</text>
+    </view>
+
+    <!-- 内容 -->
+    <view class="post-content">
+      <text class="content-text">{{post.content}}</text>
+    </view>
+
+    <!-- 图片 -->
+    <view class="post-images" wx:if="{{post.hasImages}}">
+      <view 
+        wx:for="{{post.images}}" 
+        wx:key="index"
+        class="image-item"
+        data-index="{{index}}"
+        data-images="{{post.images}}"
+        bindtap="previewImage"
+      >
+        <image class="post-image" src="{{item}}" mode="aspectFill" />
+      </view>
+    </view>
+
+    <!-- 操作栏 -->
+    <view class="post-actions">
+      <!-- 点赞 -->
+      <view 
+        class="action-item {{post.isLiked ? 'liked' : ''}}"
+        data-id="{{post.id}}"
+        bindtap="toggleLike"
+      >
+        <image 
+          src="{{post.isLiked ? '/assets/icons/liked.png' : '/assets/icons/like.png'}}" 
+          style="width: 20px; height: 20px;"
+        />
+        <text class="action-count">{{post.likeCount || 0}}</text>
+      </view>
+
+      <!-- 评论 -->
+      <view class="action-item" bindtap="focusCommentInput">
+        <image 
+          src="{{'/assets/icons/comment.png'}}" 
+          style="width: 20px; height: 20px;"
+        />
+        <text class="action-count">{{post.commentCount || 0}}</text>
+      </view>
+
+      <!-- 分享 -->
+      <view class="action-item" bindtap="onShareTap">
+        <icon type="share" size="20" />
+      </view>
+
+      <!-- 复制 -->
+      <view 
+        class="action-item"
+        data-content="{{post.content}}"
+        bindtap="copyContent"
+      >
+        <icon type="copy" size="20" />
+      </view>
+    </view>
+  </view>
+
+  <!-- 评论区标题 -->
+  <view class="comments-title" wx:if="{{!loadingComments}}">
+    <text class="title">评论区 ({{post.commentCount || 0}})</text>
+  </view>
+
+  <!-- 评论加载中 -->
+  <view class="loading-comments" wx:if="{{loadingComments}}">
+    <view class="mini-spinner"></view>
+    <text>加载评论中...</text>
+  </view>
+
+  <!-- 空评论状态 -->
+  <view class="empty-comments" wx:if="{{!loadingComments && comments.length === 0}}">
+    <text class="empty-text">暂无评论，快来抢沙发~</text>
+  </view>
+
+  <!-- 评论列表 -->
+  <scroll-view 
+    class="comments-list" 
+    scroll-y 
+    wx:if="{{!loadingComments && comments.length > 0}}"
+  >
+    <block wx:for="{{comments}}" wx:key="id">
+      <view class="comment-item">
+        <image class="comment-avatar" src="{{item.userAvatar}}" />
+        <view class="comment-content-wrap">
+          <view class="comment-header">
+            <text class="comment-username">{{item.userNickname}}</text>
+            <text class="comment-time">{{item.displayTime}}</text>
+          </view>
+          <text class="comment-text">{{item.content}}</text>
+        </view>
+      </view>
+    </block>
+
+    <!-- 加载更多评论 -->
+    <view class="load-more-comments" wx:if="{{hasMoreComments}}">
+      <text class="load-text" wx:if="{{!loadingMoreComments}}" bindtap="loadMoreComments">加载更多</text>
+      <view class="loading-more" wx:if="{{loadingMoreComments}}">
+        <view class="mini-spinner"></view>
+        <text>加载中...</text>
+      </view>
+    </view>
+  </scroll-view>
+
+  <!-- 评论输入框 -->
+  <view class="comment-input-bar" wx:if="{{isLoggedIn}}">
+    <input 
+      class="comment-input"
+      placeholder="说点什么..."
+      value="{{commentContent}}"
+      bindinput="onCommentInput"
+      focus="{{focusCommentInputFlag}}"
+    />
+    <button class="submit-btn" bindtap="submitComment" >
+      发送
+    </button>
+  </view>
+
+  <!-- 未登录提示 -->
+  <view class="login-tip" wx:if="{{!isLoggedIn}}" bindtap="showLoginPrompt">
+    <text class="tip-text">登录后可发表评论</text>
+  </view>
+</view>

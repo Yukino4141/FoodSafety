@@ -142,9 +142,13 @@ Page({
     
     try {
       // 调用历史记录接口
-      const history = await app.getScanHistory();
+      let history = await app.getScanHistory();
       console.log('获取到历史记录:', history.length, '条');
       
+         // ========== 在页面层进行去重 ==========
+      history = this.deduplicateHistory(history);
+      console.log('去重后历史记录:', history.length, '条');
+
       // 计算统计信息
       const stats = this.calculateStats(history);
       
@@ -172,6 +176,108 @@ Page({
     } finally {
       wx.hideLoading();
     }
+  },
+  // 根据商品名称和条形码智能去重
+  deduplicateHistory(historyList) {
+    if (!Array.isArray(historyList)) return [];
+    
+    // 使用组合key进行去重：商品ID + 条形码 + 商品名称
+    const uniqueMap = new Map();
+    
+    historyList.forEach(item => {
+      // 构建唯一标识符
+      const key = this.generateUniqueKey(item);
+      
+      if (key) {
+        const existingItem = uniqueMap.get(key);
+        if (existingItem) {
+          // 比较扫描时间，保留最新的
+          const existingTime = new Date(existingItem.updateTime || existingItem.scanTime || 0);
+          const currentTime = new Date(item.updateTime || item.scanTime || 0);
+          
+          if (currentTime > existingTime) {
+            uniqueMap.set(key, item);
+          }
+        } else {
+          uniqueMap.set(key, item);
+        }
+      }
+    });
+    
+    return Array.from(uniqueMap.values());
+  },
+
+  // 生成唯一标识符
+  generateUniqueKey(item) {
+    // 优先级1: 商品ID + 条形码
+    if (item.id && item.barcode) {
+      return `${item.id}_${item.barcode}`;
+    }
+    
+    // 优先级2: 仅商品ID
+    if (item.id || item.productId) {
+      return String(item.id || item.productId);
+    }
+    
+    // 优先级3: 仅条形码
+    if (item.barcode) {
+      return item.barcode;
+    }
+    
+    // 优先级4: 商品名称 + 品牌（如果都有）
+    if (item.name && item.brand) {
+      return `${item.name}_${item.brand}`;
+    }
+    
+    // 优先级5: 仅商品名称
+    if (item.name) {
+      return item.name;
+    }
+    
+    // 无法生成唯一key
+    console.warn('无法为历史记录项生成唯一key:', item);
+    return null;
+  },
+
+  // 计算统计信息（需要修改以处理去重后的数据）
+  calculateStats(history) {
+    const stats = {
+      total: history.length,
+      safe: 0,
+      risk: 0,
+      danger: 0
+    };
+    
+    history.forEach(item => {
+      // 根据处理后的安全状态统计
+      const status = item.safetyStatus || item.safetyInfo?.status || 'SAFE';
+      
+      switch (status) {
+        case 'SAFE':
+          stats.safe++;
+          break;
+        case 'RISK':
+          stats.risk++;
+          break;
+        case 'DANGER':
+          stats.danger++;
+          break;
+      }
+    });
+    
+    return stats;
+  },
+
+  // 应用筛选（修改为使用处理后的安全状态）
+  applyFilter(history, filterStatus) {
+    if (filterStatus === 'all') {
+      return history;
+    }
+    
+    return history.filter(item => {
+      const status = item.safetyStatus || item.safetyInfo?.status || 'SAFE';
+      return status === filterStatus;
+    });
   },
 
   // 刷新数据
@@ -210,32 +316,6 @@ Page({
         loadingMore: false
       });
     }
-  },
-
-  // 计算统计信息
-  calculateStats(history) {
-    const stats = {
-      total: history.length,
-      safe: 0,
-      risk: 0,
-      danger: 0
-    };
-    
-    history.forEach(item => {
-      switch (item.safetyStatus) {
-        case 'SAFE':
-          stats.safe++;
-          break;
-        case 'RISK':
-          stats.risk++;
-          break;
-        case 'DANGER':
-          stats.danger++;
-          break;
-      }
-    });
-    
-    return stats;
   },
 
   // 应用筛选

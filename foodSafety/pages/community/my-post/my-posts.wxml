@@ -1,0 +1,186 @@
+<!-- pages/community/my-posts/my-posts.wxml -->
+<view class="my-posts-page">
+  <!-- 顶部栏 -->
+  <view class="header-bar">
+    <view class="header-title">
+      <text class="title-text">我的帖子</text>
+    </view>
+  </view>
+
+  <!-- 错误状态 -->
+  <view class="error-container" wx:if="{{error}}">
+    <image src="/assets/icons/network-error.png" class="error-icon" />
+    <text class="error-text">{{errorMessage}}</text>
+    <button class="reload-btn" bindtap="reloadPage">重新加载</button>
+  </view>
+
+  <!-- 未登录状态 -->
+  <view class="login-tip" wx:if="{{!isLoggedIn && !error}}">
+    <image src="/assets/icons/login.png" class="login-icon" />
+    <text class="login-text">请先登录查看我的帖子</text>
+    <button class="login-btn" bindtap="showLoginPrompt">立即登录</button>
+  </view>
+
+  <!-- 加载状态 -->
+  <view class="loading-overlay" wx:if="{{loading && posts.length === 0 && isLoggedIn && !error}}">
+    <view class="loading-content">
+      <view class="spinner"></view>
+      <text class="loading-text">加载中...</text>
+    </view>
+  </view>
+
+  <!-- 空状态 -->
+  <view class="empty-overlay" wx:if="{{!loading && empty && isLoggedIn && !error}}">
+    <view class="empty-content">
+      <image src="/assets/icons/no-posts.png" class="empty-icon" />
+      <text class="empty-text">{{emptyMessage}}</text>
+      <text class="empty-subtext">{{emptySubMessage}}</text>
+      <button class="empty-action" bindtap="createNewPost">
+        <icon type="add" size="16" />
+        发布第一条内容
+      </button>
+    </view>
+  </view>
+
+  <!-- 帖子列表 -->
+  <scroll-view 
+    class="post-list" 
+    scroll-y 
+    wx:if="{{!loading && !empty && isLoggedIn && !error}}"
+    refresher-enabled="true"
+    refresher-triggered="{{false}}"
+    bindrefresherrefresh="onPullDownRefresh"
+  >
+    <block wx:for="{{posts}}" wx:key="id">
+      <view class="post-card">
+        <!-- 用户信息 -->
+        <view 
+          class="user-info" 
+          bindtap="navigateToPostDetail"
+          data-id="{{item.id}}"
+        >
+          <image class="user-avatar" src="{{item.userAvatar}}" />
+          <view class="user-details">
+            <text class="user-name">{{item.userNickname}}</text>
+            <text class="post-time">{{item.displayTime}}</text>
+          </view>
+          <!-- 操作菜单（删除/编辑） -->
+          <view class="menu-button" catchtap="true" >
+            <button class="delete-btn" bindtap="deletePost" data-id="{{item.id}}" data-index="{{index}}" hover-class="none">
+              <image src="/assets/icons/delete.png" class="delete-icon" mode="aspectFit"></image>
+            </button>
+          </view>
+        </view>
+
+        <!-- 标题 -->
+        <view 
+          class="post-title" 
+          wx:if="{{item.title}}"
+          bindtap="navigateToPostDetail"
+          data-id="{{item.id}}"
+        >
+          <text class="title-text">{{item.title}}</text>
+        </view>
+
+        <!-- 内容 -->
+        <view 
+          class="post-content"
+          bindtap="navigateToPostDetail"
+          data-id="{{item.id}}"
+        >
+          <text class="content-text">{{item.content}}</text>
+        </view>
+
+        <!-- 图片 -->
+        <view class="post-images" wx:if="{{item.hasImages}}">
+          <view 
+            wx:for="{{item.images}}" 
+            wx:key="index"
+            class="image-item"
+            data-index="{{index}}"
+            data-images="{{item.images}}"
+            bindtap="previewImage"
+          >
+            <image class="post-image" src="{{item}}" mode="aspectFill" />
+          </view>
+        </view>
+
+        <!-- 数据统计 -->
+        <view class="post-stats">
+          <view class="stat-item">
+            <image src="/assets/icons/view.png" class="stat-icon" />
+            <text class="stat-count">{{item.viewCount || 0}}</text>
+          </view>
+          <view class="stat-item">
+            <image src="/assets/icons/like.png" class="stat-icon" />
+            <text class="stat-count">{{item.likeCount || 0}}</text>
+          </view>
+          <view class="stat-item">
+            <image src="/assets/icons/comment.png" class="stat-icon" />
+            <text class="stat-count">{{item.commentCount || 0}}</text>
+          </view>
+        </view>
+
+        <!-- 操作栏 -->
+        <view class="post-actions">
+          <!-- 点赞 -->
+          <view 
+            class="action-item {{item.isLiked ? 'liked' : ''}}"
+            data-id="{{item.id}}"
+            data-index="{{index}}"
+            bindtap="toggleLike"
+          >
+            <image 
+              src="{{item.isLiked ? '/assets/icons/liked.png' : '/assets/icons/like.png'}}" 
+              class="action-icon"
+            />
+            <text class="action-text">点赞</text>
+          </view>
+
+          <!-- 查看详情 -->
+          <view 
+            class="action-item"
+            data-id="{{item.id}}"
+            bindtap="navigateToPostDetail"
+          >
+            <image 
+              src="/assets/icons/detail.png"
+              class="action-icon"
+            />
+            <text class="action-text">查看详情</text>
+          </view>
+
+          <!-- 复制 -->
+          <view 
+            class="action-item"
+            data-content="{{item.content}}"
+            bindtap="copyContent"
+          >
+            <image 
+              src="/assets/icons/copy.png"
+              class="action-icon"
+            />
+            <text class="action-text">复制</text>
+          </view>
+        </view>
+      </view>
+    </block>
+
+    <!-- 加载更多 -->
+    <view class="load-more" wx:if="{{hasMore}}">
+      <text class="load-text" wx:if="{{!loadingMore}}">上拉加载更多</text>
+      <view class="loading-more" wx:if="{{loadingMore}}">
+        <view class="mini-spinner"></view>
+        <text>加载中...</text>
+      </view>
+    </view>
+
+    <!-- 底部空白 -->
+    <view class="bottom-space"></view>
+  </scroll-view>
+
+  <!-- 发布按钮（悬浮） -->
+  <view class="float-action-btn" bindtap="createNewPost">
+    <image src="/assets/icons/add.png" class="add-icon" mode="aspectFit" />
+  </view>
+</view>

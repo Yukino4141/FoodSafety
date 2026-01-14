@@ -349,27 +349,6 @@ Page({
     };
   },
 
-  // 格式化日期
-  formatDate(dateString) {
-    try {
-      const date = new Date(dateString);
-      if (isNaN(date.getTime())) {
-        return dateString;
-      }
-      
-      const year = date.getFullYear();
-      const month = date.getMonth() + 1;
-      const day = date.getDate();
-      const hour = date.getHours();
-      const minute = date.getMinutes();
-
-      const pad = n => n.toString().padStart(2, '0');
-
-      return `${pad(month)}-${pad(day)} ${pad(hour)}:${pad(minute)}`;
-    } catch (error) {
-      return dateString;
-    }
-  },
 
   // 检查收藏状态（从API获取）
   async checkFavoriteStatusFromAPI(productId) {
@@ -890,6 +869,27 @@ Page({
     const date = new Date(dateStr);
     return date instanceof Date && !isNaN(date);
   },
+
+  // 购买日期改变
+  onPurchaseDateChange(e) {
+    const value = e.detail.value;
+    this.setData({
+      'fridgeForm.purchaseDate': value
+    });
+    console.log('购买日期已选择:', value);
+  },
+
+  // 过期日期改变
+  onExpiryDateChange(e) {
+    const value = e.detail.value;
+    this.setData({
+      'fridgeForm.expiryDate': value
+    });
+    console.log('过期日期已选择:', value);
+  },
+
+// 删除旧的日期选择器相关方法（可选）
+// showDatePicker, confirmDatePicker, closeDatePicker, quickSetDate 等方法可以删除
 
   // 保存到冰箱
   async saveToInventory(product, expiryDate) {

@@ -10,15 +10,16 @@ Page({
     empty: true,
     error: false,
     errorMsg: '',
-    currentDataField:'',
+    currentDataField: '',
     
     // 筛选状态
-    filterStatus: null, // null:全部, 1:新鲜, 2:临期, 3:过期
+    filterStatus: null, // null:全部, 1:新鲜, 2:临期, 3:过期, 4:已消耗
     filterOptions: [
       { id: null, name: '全部', count: 0 },
       { id: 1, name: '新鲜', count: 0 },
       { id: 2, name: '临期', count: 0 },
-      { id: 3, name: '过期', count: 0 }
+      { id: 3, name: '过期', count: 0 },
+      { id: 4, name: '已消耗', count: 0 }
     ],
     
     // 统计信息
@@ -27,6 +28,7 @@ Page({
       fresh: 0,
       expiring: 0,
       expired: 0,
+      consumed: 0, // 已消耗
       expiringSoon: 0 // 3天内过期
     },
     
@@ -51,7 +53,12 @@ Page({
     emptySubMessage: '扫描商品后可以添加到冰箱',
     
     // 批量操作
-    batchProcessing: false
+    batchProcessing: false,
+    
+    // 消耗相关
+    consumingItem: null,
+    showConsumeConfirm: false,
+    consumeConfirmMessage: ''
   },
 
   onShow() {
@@ -76,15 +83,8 @@ Page({
         throw new Error('请先登录');
       }
       
-      // 2. 调用 app.js 中的方法获取库存列表
-      let inventoryList = [];
-      if (this.data.filterStatus) {
-        // 如果当前有筛选状态，传入筛选参数
-        inventoryList = await app.getInventoryList(this.data.filterStatus);
-      } else {
-        // 获取全部库存
-        inventoryList = await app.getInventoryList();
-      }
+      // 2. 获取全部库存数据（不进行筛选）
+      const inventoryList = await app.getInventoryList();
       
       console.log('获取库存列表成功:', inventoryList.length);
       
@@ -94,7 +94,7 @@ Page({
       // 4. 更新筛选选项计数
       const filterOptions = this.updateFilterCounts(this.data.filterOptions, inventoryList);
       
-      // 5. 过滤列表（根据当前筛选状态）
+      // 5. 根据当前筛选状态过滤列表
       const filteredList = this.filterInventoryList(inventoryList, this.data.filterStatus);
       
       // 6. 更新页面数据
@@ -144,13 +144,14 @@ Page({
     }
   },
 
-  // 计算统计信息
+  // 计算统计信息 - 修复版本
   calculateStats(inventoryList) {
     const stats = {
-      total: inventoryList.length,
+      total: 0,
       fresh: 0,
       expiring: 0,
       expired: 0,
+      consumed: 0,
       expiringSoon: 0
     };
     
@@ -161,29 +162,40 @@ Page({
         stats.expiring++;
       } else if (item.status === 3) {
         stats.expired++;
+      } else if (item.status === 4) {
+        stats.consumed++;
       }
       
-      // 3天内过期（包括今天）
-      if (item.remainingDays >= 0 && item.remainingDays <= 3) {
+      // 3天内过期（包括今天），只计算非已消耗商品
+      if (item.status !== 4 && item.remainingDays >= 0 && item.remainingDays <= 3) {
         stats.expiringSoon++;
       }
     });
     
+    // 总数不包括已消耗的商品
+    stats.total = stats.fresh + stats.expiring + stats.expired;
+    
     return stats;
   },
 
-  // 更新筛选选项计数
+  // 更新筛选选项计数 - 修复版本
   updateFilterCounts(filterOptions, inventoryList) {
     const counts = {
-      null: inventoryList.length,
-      1: 0,
-      2: 0,
-      3: 0
+      null: 0, // 全部：不包括已消耗
+      1: 0,    // 新鲜
+      2: 0,    // 临期
+      3: 0,    // 过期
+      4: 0     // 已消耗
     };
     
     inventoryList.forEach(item => {
-      if (counts[item.status] !== undefined) {
-        counts[item.status]++;
+      const status = item.status;
+      if (status !== 4) {
+        counts.null++; // 非已消耗商品计入"全部"
+      }
+      
+      if (counts[status] !== undefined) {
+        counts[status]++;
       }
     });
     
@@ -193,37 +205,45 @@ Page({
     }));
   },
 
-  // 过滤库存列表
+  // 过滤库存列表 - 修复版本
   filterInventoryList(list, status) {
-    if (!status) {
-      return list;
+    if (status === null) {
+      // 全部状态：显示除已消耗外的所有商品
+      return list.filter(item => item.status !== 4);
+    } else if (status === 4) {
+      // 已消耗状态：只显示已消耗的商品
+      return list.filter(item => item.status === 4);
+    } else {
+      // 其他状态：显示对应状态且非已消耗的商品
+      return list.filter(item => item.status === status && item.status !== 4);
     }
-    return list.filter(item => item.status === status);
   },
 
-  // 获取空状态消息
+  // 获取空状态消息 - 修复版本
   getEmptyMessage(filterStatus) {
     const messages = {
-      null: '冰箱空空如也',
+      null: '冰箱空空如也', // 全部（不包括已消耗）
       1: '暂无新鲜商品',
       2: '暂无临期商品',
-      3: '暂无过期商品'
+      3: '暂无过期商品',
+      4: '暂无已消耗商品'
     };
     return messages[filterStatus] || messages.null;
   },
 
-  // 获取空状态副消息
+  // 获取空状态副消息 - 修复版本
   getEmptySubMessage(filterStatus) {
     const messages = {
       null: '扫描商品后可以添加到冰箱',
       1: '所有商品都需要关注保质期哦',
       2: '很好！没有需要紧急处理的商品',
-      3: '很棒！冰箱里没有过期食品'
+      3: '很棒！冰箱里没有过期食品',
+      4: '还没有标记为已消耗的商品'
     };
     return messages[filterStatus] || messages.null;
   },
 
-  // 切换筛选状态
+  // 切换筛选状态 - 修复版本
   async switchFilter(e) {
     const status = e.currentTarget.dataset.status;
     
@@ -237,19 +257,13 @@ Page({
     });
     
     try {
-      // 根据筛选状态重新加载数据
-      let inventoryList = [];
-      if (status) {
-        inventoryList = await app.getInventoryList(status);
-      } else {
-        inventoryList = await app.getInventoryList();
-      }
+      // 获取全部库存数据
+      const inventoryList = this.data.inventoryList;
       
-      // 过滤列表（本地过滤）
+      // 根据筛选状态过滤列表
       const filteredList = this.filterInventoryList(inventoryList, status);
       
       this.setData({
-        inventoryList: inventoryList,
         filteredList: filteredList,
         loading: false,
         empty: filteredList.length === 0,
@@ -278,9 +292,17 @@ Page({
   },
 
   // 编辑库存商品
-  // 编辑库存商品
   editInventoryItem(e) {
     const item = e.currentTarget.dataset.item;
+    
+    // 只有非已消耗状态的商品才能编辑
+    if (item.status === 4) {
+      wx.showToast({
+        title: '已消耗的商品不能编辑',
+        icon: 'none'
+      });
+      return;
+    }
     
     // 设置编辑表单数据
     const today = new Date();
@@ -301,16 +323,6 @@ Page({
 
   // 表单输入处理
   onEditInput(e) {
-    const field = e.currentTarget.dataset.field;
-    const value = e.detail.value;
-    
-    this.setData({
-      [`editForm.${field}`]: value
-    });
-  },
-
-  // 日期选择器
-  onDatePicker(e) {
     const field = e.currentTarget.dataset.field;
     const value = e.detail.value;
     
@@ -344,19 +356,23 @@ Page({
         purchaseDate: editForm.purchaseDate || null
       };
       
-      // 调用 app.js 中的更新接口
-      await app.updateInventoryItem(editingItem.id, updateData);
+      // 调用 app.js 中的更新接口（PUT /user/inventory/{id}）
+      const result = await app.updateInventoryItem(editingItem.id, updateData);
       
-      // 关闭弹窗
-      this.closeEditModal();
-      
-      // 重新加载数据
-      await this.loadInventoryData();
-      
-      wx.showToast({
-        title: '更新成功',
-        icon: 'success'
-      });
+      if (result === 'success') {
+        // 关闭弹窗
+        this.closeEditModal();
+        
+        // 重新加载数据
+        await this.loadInventoryData();
+        
+        wx.showToast({
+          title: '更新成功',
+          icon: 'success'
+        });
+      } else {
+        throw new Error(result.msg || '更新失败');
+      }
       
     } catch (error) {
       console.error('更新库存商品失败:', error);
@@ -405,16 +421,20 @@ Page({
     wx.showLoading({ title: '删除中...' });
     
     try {
-      // 调用 app.js 中的删除接口
-      await app.deleteInventoryItem(itemId);
+      // 调用 app.js 中的删除接口（DELETE /user/inventory/{id}）
+      const result = await app.deleteInventoryItem(itemId);
       
-      // 重新加载数据
-      await this.loadInventoryData();
-      
-      wx.showToast({
-        title: '已移除',
-        icon: 'success'
-      });
+      if (result.msg === 'success') {
+        // 重新加载数据
+        await this.loadInventoryData();
+        
+        wx.showToast({
+          title: '已移除',
+          icon: 'success'
+        });
+      } else {
+        throw new Error(result.msg || '删除失败');
+      }
       
     } catch (error) {
       console.error('删除库存商品失败:', error);
@@ -434,6 +454,66 @@ Page({
       deletingId: null,
       showDeleteConfirm: false,
       deleteConfirmMessage: ''
+    });
+  },
+
+  // 标记商品为已消耗
+  confirmConsume(e) {
+    const itemId = e.currentTarget.dataset.id;
+    const itemName = e.currentTarget.dataset.name || '该商品';
+    
+    this.setData({
+      consumingItem: itemId,
+      showConsumeConfirm: true,
+      consumeConfirmMessage: `确定要将"${itemName}"标记为已消耗吗？`
+    });
+  },
+
+  // 执行消耗
+  async executeConsume() {
+    const itemId = this.data.consumingItem;
+    
+    if (!itemId) {
+      this.closeConsumeConfirm();
+      return;
+    }
+    
+    wx.showLoading({ title: '标记中...' });
+    
+    try {
+      // 调用 app.js 中的消耗接口（PATCH /user/inventory/{id}/consume）
+      const result = await app.request(`/user/inventory/${itemId}/consume`, 'PATCH');
+      
+      if (result === 'success') {
+        // 重新加载数据
+        await this.loadInventoryData();
+        
+        wx.showToast({
+          title: '已标记为消耗',
+          icon: 'success'
+        });
+      } else {
+        throw new Error(result.msg || '标记失败');
+      }
+      
+    } catch (error) {
+      console.error('标记消耗失败:', error);
+      wx.showToast({
+        title: error.message || '标记失败',
+        icon: 'none'
+      });
+    } finally {
+      wx.hideLoading();
+      this.closeConsumeConfirm();
+    }
+  },
+
+  // 关闭消耗确认
+  closeConsumeConfirm() {
+    this.setData({
+      consumingItem: null,
+      showConsumeConfirm: false,
+      consumeConfirmMessage: ''
     });
   },
 
@@ -462,15 +542,22 @@ Page({
               app.deleteInventoryItem(item.id)
             );
             
-            await Promise.all(deletePromises);
+            const results = await Promise.all(deletePromises);
             
-            // 重新加载数据
-            await this.loadInventoryData();
+            // 检查是否所有操作都成功
+            const allSuccess = results.every(result => result.code === 1);
             
-            wx.showToast({
-              title: `已移除${expiredItems.length}个商品`,
-              icon: 'success'
-            });
+            if (allSuccess) {
+              // 重新加载数据
+              await this.loadInventoryData();
+              
+              wx.showToast({
+                title: `已移除${expiredItems.length}个商品`,
+                icon: 'success'
+              });
+            } else {
+              throw new Error('部分删除操作失败');
+            }
             
           } catch (error) {
             console.error('批量删除失败:', error);
@@ -589,31 +676,6 @@ Page({
     this.loadInventoryData();
   },
 
-  // 获取库存统计信息
-  async getInventoryStatistics() {
-    try {
-      // 调用 app.js 中的库存统计方法（如果存在）
-      if (app.getInventoryStats) {
-        const stats = await app.getInventoryStats();
-        return stats;
-      }
-      
-      // 如果没有专门的统计接口，自己计算
-      const inventoryList = await app.getInventoryList();
-      return this.calculateStats(inventoryList);
-      
-    } catch (error) {
-      console.error('获取统计信息失败:', error);
-      return {
-        total: 0,
-        fresh: 0,
-        expiring: 0,
-        expired: 0,
-        expiringSoon: 0
-      };
-    }
-  },
-
   // 显示商品详情弹窗
   showItemDetail(e) {
     const item = e.currentTarget.dataset.item;
@@ -626,6 +688,7 @@ Page({
       confirmText: '知道了'
     });
   },
+
   // 显示日期选择器
   showDatePicker(e) {
     const field = e.currentTarget.dataset.field;
@@ -634,7 +697,7 @@ Page({
     
     this.setData({
       datePickerVisible: true,
-      currentDateField: field,
+      currentDataField: field,
       datePickerTitle: title,
       datePickerValue: currentValue
     });
@@ -650,11 +713,11 @@ Page({
 
   // 确认日期选择
   confirmDatePicker() {
-    const { currentDateField, datePickerValue } = this.data;
+    const { currentDataField, datePickerValue } = this.data;
     
-    if (currentDateField && datePickerValue) {
+    if (currentDataField && datePickerValue) {
       this.setData({
-        [`editForm.${currentDateField}`]: datePickerValue
+        [`editForm.${currentDataField}`]: datePickerValue
       });
     }
     
@@ -665,7 +728,7 @@ Page({
   closeDatePicker() {
     this.setData({
       datePickerVisible: false,
-      currentDateField: '',
+      currentDataField: '',
       datePickerTitle: '选择日期',
       datePickerValue: ''
     });
@@ -674,7 +737,7 @@ Page({
   // 快速设置日期（今天、明天、一周后等）
   quickSetDate(e) {
     const type = e.currentTarget.dataset.type;
-    const field = this.data.currentDateField;
+    const field = this.data.currentDataField;
     
     if (!field) return;
     
@@ -739,6 +802,7 @@ Page({
       return 0;
     }
   },
+  
   // 清除日期
   clearDate(e) {
     const field = e.currentTarget.dataset.field;
@@ -804,4 +868,32 @@ Page({
       return dateStr;
     }
   },
+
+  // 获取状态文本
+  getStatusText(status) {
+    const statusMap = {
+      1: '新鲜',
+      2: '临期',
+      3: '过期',
+      4: '已消耗'
+    };
+    return statusMap[status] || '未知';
+  },
+
+  // 获取状态颜色
+  getStatusColor(status) {
+    const colorMap = {
+      1: '#07c160', // 绿色
+      2: '#ff9500', // 橙色
+      3: '#ff3b30', // 红色
+      4: '#8e8e93'  // 灰色
+    };
+    return colorMap[status] || '#cccccc';
+  },
+
+  // 根据状态判断是否显示操作按钮
+  showActionButtons(status) {
+    // 已消耗的商品不显示编辑和消耗按钮
+    return status !== 4;
+  }
 });

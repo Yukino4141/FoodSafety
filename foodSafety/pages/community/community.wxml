@@ -6,10 +6,14 @@
       <text class="title-text">食安社区</text>
       <text class="title-sub">分享食品安全经验</text>
     </view>
-    <button class="publish-btn" bindtap="createNewPost">
-      <icon type="add" size="18" />
-      发布
-    </button>
+    <button 
+        class="my-posts-btn" 
+        bindtap="viewMyPosts"
+        wx:if="{{isLoggedIn}}"
+      >
+        我的
+      </button>
+
   </view>
 
   <!-- 排序标签 -->
@@ -29,7 +33,7 @@
   <!-- 加载状态 -->
   <view class="loading-overlay" wx:if="{{loading && posts.length === 0}}">
     <view class="loading-content">
-      <view class="spinner"></view>
+      <view class="mini-spinner"></view>
       <text class="loading-text">加载中...</text>
     </view>
   </view>
@@ -55,15 +59,16 @@
     refresher-enabled="true"
     refresher-triggered="{{false}}"
     bindrefresherrefresh="onPullDownRefresh"
+    bindscrolltolower="onReachBottom"
   >
     <block wx:for="{{posts}}" wx:key="id">
-      <view class="post-card">
+      <view class="post-card" bindtap="navigateToPostDetail" data-id="{{item.id}}">
         <!-- 用户信息 -->
         <view class="user-info">
-          <image class="user-avatar" src="{{item.userAvatar}}" />
+          <image class="user-avatar" src="{{item.userAvatar || '/assets/images/default-avatar.png'}}" />
           <view class="user-details">
-            <text class="user-name">{{item.userNickname}}</text>
-            <text class="post-time">{{item.displayTime}}</text>
+            <text class="user-name">{{item.userNickname || '匿名用户'}}</text>
+            <text class="post-time">{{item.displayTime || '刚刚'}}</text>
           </view>
         </view>
 
@@ -78,16 +83,18 @@
         </view>
 
         <!-- 图片 -->
-        <view class="post-images" wx:if="{{item.hasImages}}">
+        <view class="post-images" wx:if="{{item.hasImages && item.images.length > 0}}">
           <view 
             wx:for="{{item.images}}" 
             wx:key="index"
+            wx:for-item="img"
             class="image-item"
             data-index="{{index}}"
             data-images="{{item.images}}"
             bindtap="previewImage"
+            catchtap="true" 
           >
-            <image class="post-image" src="{{item}}" mode="aspectFill" />
+            <image class="post-image" src="{{img}}" mode="aspectFill" />
           </view>
         </view>
 
@@ -99,36 +106,112 @@
             data-id="{{item.id}}"
             data-index="{{index}}"
             bindtap="toggleLike"
+            catchtap="true"
           >
-          <image 
+            <image 
               src="{{item.isLiked ? '/assets/icons/liked.png' : '/assets/icons/like.png'}}" 
-              style="width: 20px; height: 20px;"
+              style="width: 32rpx; height: 32rpx;"
             />
             <text class="action-count">{{item.likeCount || 0}}</text>
           </view>
 
           <!-- 评论 -->
-          <view class="action-item">
+          <view 
+            class="action-item"
+            data-id="{{item.id}}"
+            data-index="{{index}}"
+            bindtap="viewComments"
+            catchtap="true" 
+          >
             <image 
-              src="{{'/assets/icons/comment.png'}}" 
-              style="width: 20px; height: 20px;"
+              src="/assets/icons/comment.png" 
+              style="width: 32rpx; height: 32rpx;"
             />
             <text class="action-count">{{item.commentCount || 0}}</text>
           </view>
 
-          <!-- 分享 -->
-          <view class="action-item">
-            <icon type="share" size="20" />
-          </view>
-
-          <!-- 复制 -->
+          <!-- 查看次数 -->
           <view 
             class="action-item"
-            data-content="{{item.content}}"
-            bindtap="copyContent"
+            data-id="{{item.id}}"
+            data-index="{{index}}"
+            catchtap="true" 
           >
-            <icon type="copy" size="20" />
+            <image 
+              src="/assets/icons/view.png" 
+              style="width: 32rpx; height: 32rpx;"
+            />
+            <text class="action-count">{{item.viewCount || 0}}</text>
           </view>
+
+          <!-- 分享 -->
+          <view 
+            class="action-item"
+            data-id="{{item.id}}"
+            data-index="{{index}}"
+          >
+            <image 
+              src="/assets/icons/share.png" 
+              style="width: 32rpx; height: 32rpx;"
+            />
+            <text class="action-count">{{item.shareCount || 0}}</text>
+          </view>
+        </view>
+      </view>
+
+      <!-- 评论列表区域 -->
+      <view class="comment-section" wx:if="{{showComments && currentPostId === item.id}}">
+        <!-- 评论加载中 -->
+        <view class="loading-comments" wx:if="{{loadingComments}}">
+          <view class="mini-spinner"></view>
+          <text class="loading-text">加载评论中...</text>
+        </view>
+
+        <!-- 评论列表 -->
+        <view class="comment-list" wx:else>
+          <block wx:for="{{comments}}" wx:key="id">
+            <view class="comment-item">
+              <image class="comment-avatar" src="{{item.userAvatar || '/assets/images/default-avatar.png'}}" />
+              <view class="comment-content-wrap">
+                <text class="comment-username">{{item.userNickname || '匿名用户'}}</text>
+                <text class="comment-text">{{item.content}}</text>
+                <text class="comment-time">{{item.createTime || '刚刚'}}</text>
+              </view>
+            </view>
+          </block>
+
+          <!-- 空评论提示 -->
+          <view class="empty-comment" wx:if="{{comments.length === 0}}">
+            <text class="empty-comment-text">暂无评论，快来抢沙发~</text>
+          </view>
+
+          <!-- 加载更多评论 -->
+          <view class="load-more-comment" wx:if="{{hasMoreComments}}">
+            <text class="load-text" wx:if="{{!loadingMoreComments}}" bindtap="loadMoreComments">点击加载更多</text>
+            <view class="loading-more" wx:if="{{loadingMoreComments}}">
+              <view class="mini-spinner"></view>
+              <text>加载中...</text>
+            </view>
+          </view>
+        </view>
+
+        <!-- 评论输入框 -->
+        <view class="comment-input-wrap" wx:if="{{showCommentInput && currentPostId === item.id}}">
+          <input 
+            class="comment-input" 
+            placeholder="请输入评论内容..." 
+            value="{{commentContent}}"
+            bindinput="onCommentInput"
+          />
+          <button class="comment-submit-btn" bindtap="submitComment">发布</button>
+          <button class="comment-cancel-btn" bindtap="hideCommentInput">取消</button>
+        </view>
+
+        <!-- 显示评论输入按钮 -->
+        <view class="comment-add-btn-wrap" wx:if="{{!showCommentInput && showComments && currentPostId === item.id}}">
+          <button class="comment-add-btn" bindtap="showCommentInput" data-id="{{item.id}}" data-index="{{index}}">
+            发表评论
+          </button>
         </view>
       </view>
     </block>
@@ -143,11 +226,11 @@
     </view>
 
     <!-- 底部空白 -->
-    <view class="bottom-space"></view>
+    <view class="bottom-space" style="height: 120rpx;"></view>
   </scroll-view>
 
   <!-- 发布按钮（悬浮） -->
   <view class="float-action-btn" bindtap="createNewPost">
-    <icon type="add" size="24" color="#fff" />
+    <image src="/assets/icons/add.png" class="add-icon" mode="aspectFit" />
   </view>
 </view>

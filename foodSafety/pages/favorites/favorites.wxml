@@ -1,2 +1,175 @@
-<!--pages/favorites/favorites.wxml-->
-<text>pages/favorites/favorites.wxml</text>
+<!-- pages/favorites/favorites.wxml -->
+<view class="favorites-page">
+  <!-- 顶部导航栏 -->
+  <view class="navbar">
+    <view class="nav-left">
+      <text class="nav-title" wx:if="{{!editing}}">我的收藏</text>
+      <text class="nav-title" wx:else>选择收藏</text>
+    </view>
+    <view class="nav-right">
+      <view class="edit-btn" bindtap="toggleEditMode" wx:if="{{!empty}}">
+        <text>{{editing ? '完成' : '编辑'}}</text>
+      </view>
+    </view>
+  </view>
+
+  <!-- 加载状态 -->
+  <view class="loading-container" wx:if="{{loading && !loadingMore}}">
+    <view class="loading-content">
+      <image src="/assets/images/loading.gif" class="loading-icon" />
+      <text class="loading-text">加载中...</text>
+    </view>
+  </view>
+
+  <!-- 错误状态 -->
+  <view class="error-container" wx:if="{{error && !loading}}">
+    <view class="error-content">
+      <image src="/assets/images/error.png" class="error-icon" />
+      <text class="error-text">{{errorMsg}}</text>
+      <button class="retry-btn" bindtap="reload">重新加载</button>
+    </view>
+  </view>
+
+  <!-- 空状态 -->
+  <view class="empty-container" wx:if="{{empty && !loading && !error}}">
+    <view class="empty-content">
+      <image src="/assets/images/empty-favorites.png" class="empty-icon" />
+      <text class="empty-text">暂无收藏商品</text>
+      <text class="empty-hint">扫描商品后可以点击收藏按钮哦</text>
+      <button class="scan-btn" bindtap="goToScan">去扫描商品</button>
+    </view>
+  </view>
+
+  <!-- 收藏列表 -->
+  <view class="favorites-list" wx:if="{{!empty && !loading}}">
+    <!-- 编辑模式顶部操作栏 -->
+    <view class="edit-toolbar" wx:if="{{editing}}">
+      <view class="select-all" bindtap="toggleSelectAll">
+        <view class="checkbox {{selectAll ? 'checked' : ''}}">
+          <text class="check-icon" wx:if="{{selectAll}}">✓</text>
+        </view>
+        <text class="select-text">全选</text>
+      </view>
+      <view class="batch-actions">
+        <text class="selected-count">已选 {{selectedItems.length}} 个</text>
+        <button class="delete-btn" bindtap="batchRemoveFavorites">删除</button>
+      </view>
+    </view>
+
+    <!-- 收藏商品列表 -->
+    <scroll-view 
+      class="scroll-view" 
+      scroll-y 
+      enable-back-to-top
+      bindscrolltolower="onReachBottom"
+    >
+      <view class="list-content">
+        <view 
+          class="favorite-item {{editing && selectedItems.indexOf(item.id) > -1 ? 'selected' : ''}}"
+          wx:for="{{favorites}}" 
+          wx:key="id"
+          wx:for-index="index"
+          wx:for-item="item"
+        >
+          <!-- 选择框（编辑模式下显示） -->
+          <view 
+            class="item-checkbox" 
+            wx:if="{{editing}}"
+            bindtap="toggleSelectItem"
+            data-id="{{item.id}}"
+          >
+            <view class="checkbox {{selectedItems.indexOf(item.id) > -1 ? 'checked' : ''}}">
+              <text class="check-icon" wx:if="{{selectedItems.indexOf(item.id) > -1}}">✓</text>
+            </view>
+          </view>
+
+          <!-- 商品信息 -->
+          <view 
+            class="item-content" 
+            bindtap="viewProductDetail"
+            data-product="{{item}}"
+          >
+            <!-- 商品图片 -->
+            <view class="product-image">
+              <image 
+                class="image" 
+                src="{{item.image || '/assets/images/default-food.png'}}" 
+                mode="aspectFill"
+              />
+              <!-- 安全状态角标 -->
+              <view class="safety-badge {{getSafetyColor(item.safetyStatus, item.riskLevel)}}">
+                {{getSafetyTag(item.safetyStatus, item.riskLevel)}}
+              </view>
+            </view>
+
+            <!-- 商品详情 -->
+            <view class="product-info">
+              <view class="product-header">
+                <text class="product-name" wx:if="{{item.name}}">{{item.name}}</text>
+                <text class="product-name" wx:else>未知商品</text>
+                <text class="product-barcode" wx:if="{{item.barcode}}">{{item.barcode}}</text>
+              </view>
+
+              <view class="product-details">
+                <!-- 制造商 -->
+                <text class="detail-item" wx:if="{{item.manufacturer}}">
+                  制造商：{{item.manufacturer}}
+                </text>
+                <!-- 成分 -->
+                <text class="detail-item ingredients" wx:if="{{item.ingredientList && item.ingredientList.length > 0}}">
+                  成分：{{item.ingredientList.slice(0, 2).join('、')}}{{item.ingredientList.length > 2 ? '...' : ''}}
+                </text>
+                <!-- 保质期 -->
+                <text class="detail-item" wx:if="{{item.shelfLife}}">
+                  保质期：{{item.shelfLife}}
+                </text>
+              </view>
+
+              <!-- 风险提示 -->
+              <view class="risk-info" wx:if="{{item.riskMsg}}">
+                <text class="risk-icon">⚠️</text>
+                <text class="risk-text">{{item.riskMsg}}</text>
+              </view>
+
+              <!-- 更新时间 -->
+              <view class="update-time" wx:if="{{item.updateTime}}">
+                <text class="time-icon">🕒</text>
+                <text class="time-text">{{item.updateTime}}</text>
+              </view>
+            </view>
+
+            <!-- 操作按钮（非编辑模式显示） -->
+            <view class="item-actions" wx:if="{{!editing}}">
+              <button 
+                class="remove-btn" 
+                bindtap="removeFavorite"
+                data-product="{{item}}"
+              >
+                取消收藏
+              </button>
+            </view>
+          </view>
+        </view>
+
+        <!-- 加载更多 -->
+        <view class="load-more" wx:if="{{hasMore}}">
+          <text class="loading-text" wx:if="{{loadingMore}}">加载中...</text>
+          <text class="more-text" wx:else>上拉加载更多</text>
+        </view>
+
+        <!-- 没有更多数据 -->
+        <view class="no-more" wx:if="{{!hasMore && favorites.length > 0}}">
+          <text class="no-more-text">没有更多收藏了</text>
+        </view>
+      </view>
+    </scroll-view>
+  </view>
+
+  <!-- 底部操作栏（编辑模式下显示） -->
+  <view class="bottom-toolbar" wx:if="{{editing && selectedItems.length > 0}}">
+    <view class="toolbar-content">
+      <text class="selected-info">已选择 {{selectedItems.length}} 个商品</text>
+      <button class="batch-delete-btn" bindtap="batchRemoveFavorites">删除</button>
+    </view>
+  </view>
+</view>

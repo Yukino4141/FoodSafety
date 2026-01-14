@@ -10,7 +10,7 @@
           mode="aspectFill"
         />
         <view class="user-basic">
-          <text class="nickname">{{userInfo.nickName || '未登录用户'}}</text>
+          <text class="nickname">{{userInfo.nickName ? userInfo.nickName : (userInfo ? '已登录用户' : '未登录用户')}}</text>
           <text class="member-info">已守护食安 {{memberDays}} 天</text>
           <view class="vip-badge" wx:if="{{isVip}}">
             <text class="vip-text">VIP会员</text>
@@ -107,9 +107,9 @@
         <text class="preview-title">已选择：</text>
       </view>
       <view class="preview-content">
-        <text wx:if="{{tempProfile.allergens.length > 0}}">过敏原：{{tempProfile.allergens.join('、')}}</text>
+        <text wx:if="{{tempProfile.allergens.length > 0}}">过敏原：{{tempProfile.allergens}}</text>
         <text wx:if="{{tempProfile.dietType}}">饮食偏好：{{tempProfile.dietType}}</text>
-        <text wx:if="{{tempProfile.healthTags.length > 0}}">健康标签：{{tempProfile.healthTags.join('、')}}</text>
+        <text wx:if="{{tempProfile.healthTags.length > 0}}">健康标签：{{tempProfile.healthTags}}</text>
       </view>
     </view>
 
@@ -120,7 +120,7 @@
     </view>
   </view>
 
-  <!-- 家庭成员管理页面 -->
+  <!-- 家庭成员管理页面（新的设计） -->
   <view class="family-page" wx:if="{{showFamilyList}}">
     <view class="family-header">
       <view class="back-btn" bindtap="hideFamilyList">
@@ -135,186 +135,239 @@
     </view>
 
     <!-- 当前视角提示 -->
-    <view class="current-perspective" wx:if="{{currentMemberId}}">
-      <text class="perspective-label">当前视角：</text>
-      <text class="perspective-name">
-        {{getCurrentMemberName(currentMemberId, familyMembers)}}
-      </text>
-    </view>
+    <!-- <view class="current-perspective" wx:if="{{currentMemberId}}">
+      <view class="perspective-badge">
+        <text class="badge-icon">👁️</text>
+        <text class="badge-text">
+          当前视角：{{getCurrentMemberName(currentMemberId, familyMembers)}}
+        </text>
+      </view>
+    </view> -->
 
     <!-- 家庭成员列表 -->
-    <view class="family-list">
-      <view class="list-header">
-        <text class="list-title">已添加的成员</text>
-        <text class="list-count">共{{familyMembers.length}}人</text>
+    <view class="family-list-container">
+      <view class="section-header">
+        <text class="section-title">家庭成员列表</text>
+        <text class="section-count">共{{familyMembers.length}}人</text>
       </view>
 
-      <view class="member-item current" wx:if="{{currentMemberId}}">
-        <view class="member-info">
-          <text class="member-name">👤 我自己</text>
-          <view class="member-tags">
-            <text class="tag current-tag">当前视角</text>
+      <!-- 默认成员（用户自己） -->
+      <view class="family-section">
+        <text class="section-label">我的账户</text>
+        <view class="member-card current">
+          <view class="member-avatar">
+            <image src="/assets/images/default-avatar.png" class="avatar" />
+          </view>
+          <view class="member-details">
+            <view class="member-name-row">
+              <text class="member-name">👤 我自己</text>
+              <text class="member-status current-status">当前</text>
+            </view>
+            <view class="member-meta">
+              <text class="meta-text">主账户，永久有效</text>
+            </view>
           </view>
         </view>
-        <view class="member-actions">
-          <text class="action-text">默认</text>
-        </view>
       </view>
 
-      <view 
-        wx:for="{{familyMembers}}" 
-        wx:key="id"
-        class="member-item {{currentMemberId === item.id ? 'selected' : ''}}"
-      >
-        <view class="member-info">
-          <text class="member-name">
-            {{item.name}}
-            <text class="member-age" wx:if="{{item.age}}">({{item.age}}岁)</text>
-          </text>
-          <view class="member-tags">
-            <text 
-              wx:for="{{item.healthTags}}" 
-              wx:key="*this"
-              class="tag"
-            >
-              {{item}}
-            </text>
-            <text class="tag selected-tag" wx:if="{{currentMemberId === item.id}}">✓ 当前</text>
+      <!-- 家庭成员列表 -->
+      <view class="family-section" wx:if="{{familyMembers.length > 0}}">
+        <text class="section-label">添加的成员</text>
+        <view 
+          wx:for="{{familyMembers}}" 
+          wx:key="id"
+          class="member-card {{currentMemberId === item.id ? 'active' : ''}}"
+        >
+          <view class="member-avatar">
+            <image src="/assets/images/family-avatar.png" class="avatar" />
+            <view class="avatar-badge" wx:if="{{currentMemberId === item.id}}">✓</view>
+          </view>
+          <view class="member-details">
+            <view class="member-name-row">
+              <text class="member-name">{{item.name}}</text>
+              <view class="member-status-group">
+                <text class="member-age" wx:if="{{item.age}}">{{item.age}}岁</text>
+                <text class="member-status" wx:if="{{currentMemberId === item.id}}">使用中</text>
+              </view>
+            </view>
+            
+            <!-- 健康标签 -->
+            <view class="member-tags" wx:if="{{item.healthTags && item.healthTags.length > 0}}">
+              <view 
+                wx:for="{{item.healthTags}}" 
+                wx:key="*this"
+                class="health-tag"
+              >
+                <text class="tag-text">{{item}}</text>
+              </view>
+            </view>
+            
+            <!-- 操作按钮 -->
+            <view class="member-actions">
+              <button 
+                class="action-btn switch-btn" 
+                bindtap="switchCurrentMember"
+                data-id="{{item.id}}"
+                wx:if="{{currentMemberId !== item.id}}"
+              >
+                <text class="btn-icon">👁️</text>
+                <text class="btn-text">切换至该视角</text>
+              </button>
+              
+              <view class="more-actions">
+                <button 
+                  class="action-btn more-btn" 
+                  bindtap="showMemberOptions"
+                  data-id="{{item.id}}"
+                  data-name="{{item.name}}"
+                >
+                  <text class="btn-icon">⋯</text>
+                </button>
+              </view>
+            </view>
           </view>
         </view>
-        <view class="member-actions">
-          <button 
-            class="switch-btn" 
-            bindtap="switchCurrentMember"
-            data-id="{{item.id}}"
-            wx:if="{{currentMemberId !== item.id}}"
-          >
-            切换
-          </button>
-          <button 
-            class="delete-btn" 
-            bindtap="deleteFamilyMember"
-            data-id="{{item.id}}"
-            data-name="{{item.name}}"
-          >
-            删除
-          </button>
-        </view>
       </view>
 
-      <view class="empty-list" wx:if="{{familyMembers.length === 0}}">
-        <text class="empty-icon">👨‍👩‍👧‍👦</text>
-        <text class="empty-text">暂无家庭成员</text>
-        <text class="empty-hint">点击上方"添加"按钮为家人创建档案</text>
+      <!-- 空状态 -->
+      <view class="empty-state" wx:if="{{familyMembers.length === 0}}">
+        <image src="/assets/images/empty-family.png" class="empty-image" />
+        <text class="empty-title">暂无家庭成员</text>
+        <text class="empty-desc">为家人创建健康档案，共同守护食品安全</text>
+        <button class="empty-action-btn" bindtap="showAddFamilyForm">
+          添加第一个成员
+        </button>
+      </view>
+
+      <!-- 使用说明 -->
+      <view class="usage-guide">
+        <view class="guide-header">
+          <text class="guide-title">📝 使用说明</text>
+        </view>
+        <view class="guide-content">
+          <text class="guide-item">为家人创建健康档案，记录特殊体质</text>
+          <text class="guide-item">切换视角后，扫描结果会考虑对应成员的特殊情况</text>
+          <text class="guide-item">适合为老人、小孩、孕妇等特殊人群单独管理</text>
+        </view>
       </view>
     </view>
 
-    <!-- 使用说明 -->
-    <view class="usage-guide">
-      <view class="guide-header">
-        <text class="guide-title">📝 使用说明</text>
-      </view>
-      <view class="guide-content">
-        <text class="guide-item">1. 为家人创建健康档案，记录特殊体质</text>
-        <text class="guide-item">2. 切换视角后，扫描结果会考虑对应成员的特殊情况</text>
-        <text class="guide-item">3. 适合为老人、小孩、孕妇等特殊人群单独管理</text>
+    <!-- 成员选项弹窗 -->
+    <view class="member-options-modal" wx:if="{{showMemberOptions}}">
+      <view class="modal-mask" bindtap="hideMemberOptions"></view>
+      <view class="modal-content">
+        <view class="modal-header">
+          <text class="modal-title">{{selectedMemberName}}</text>
+        </view>
+        <view class="option-list">
+          <view class="option-item" bindtap="onEditMember">
+            <view class="option-icon">✏️</view>
+            <text class="option-text">编辑信息</text>
+          </view>
+          <view class="option-item delete" bindtap="onDeleteMember">
+            <view class="option-icon">🗑️</view>
+            <text class="option-text">删除成员</text>
+          </view>
+        </view>
+        <button class="cancel-btn" bindtap="hideMemberOptions">取消</button>
       </view>
     </view>
   </view>
 
-  <!-- 添加家庭成员表单 -->
-  <view class="add-family-page" wx:if="{{showAddFamily}}">
-    <view class="add-family-header">
-      <view class="back-btn" bindtap="hideAddFamilyForm">
-        <text class="icon">←</text>
-        <text>取消</text>
-      </view>
-      <text class="add-title">添加家庭成员</text>
-      <view class="save-btn" bindtap="addFamilyMember">
-        <text class="icon">✓</text>
-        <text>保存</text>
-      </view>
-    </view>
-
-    <!-- 表单内容 -->
-    <view class="add-form">
-      <!-- 昵称输入 -->
-      <view class="form-item">
-        <text class="form-label">昵称</text>
-        <input 
-          class="form-input" 
-          placeholder="请输入成员昵称（必填）"
-          value="{{newMember.name}}"
-          bindinput="onMemberInput"
-          data-field="name"
-          maxlength="10"
-        />
-      </view>
-
-      <!-- 年龄输入 -->
-      <view class="form-item">
-        <text class="form-label">年龄</text>
-        <input 
-          class="form-input" 
-          placeholder="请输入年龄（选填）"
-          value="{{newMember.age}}"
-          bindinput="onMemberInput"
-          data-field="age"
-          type="number"
-          maxlength="3"
-        />
-        <text class="form-hint">岁</text>
-      </view>
-
-      <!-- 特殊体质选择 -->
-      <view class="form-item">
-        <view class="form-label-row">
-          <text class="form-label">特殊体质</text>
-          <text class="form-subtitle">（多选，用于AI分析）</text>
+  <!-- 添加/编辑家庭成员表单 -->
+  <view class="add-family-modal" wx:if="{{showAddFamily}}">
+    <view class="modal-mask" bindtap="hideAddFamilyForm"></view>
+    <view class="modal-content">
+      <view class="add-family-header">
+        <view class="back-btn" bindtap="hideAddFamilyForm">
+          <text class="icon">←</text>
+          <text>取消</text>
         </view>
-        <view class="tags-container">
-          <view 
-            wx:for="{{familyHealthTags}}" 
-            wx:key="name"
-            class="tag-item {{item.selected ? 'selected' : ''}}"
-            bindtap="toggleFamilyHealthTag"
-            data-index="{{index}}"
-          >
-            <text>{{item.name}}</text>
+        <text class="add-title">{{editingMember ? '编辑家庭成员' : '添加家庭成员'}}</text>
+        <view class="save-btn" bindtap="handleFamilyFormSubmit">
+          <text class="icon">✓</text>
+          <text>保存</text>
+        </view>
+      </view>
+
+      <!-- 表单内容 -->
+      <view class="add-form">
+        <!-- 昵称输入 -->
+        <view class="form-item">
+          <text class="form-label">昵称</text>
+          <input 
+            class="form-input" 
+            placeholder="请输入成员昵称（必填）"
+            value="{{newMember.name}}"
+            bindinput="onMemberInput"
+            data-field="name"
+            maxlength="10"
+          />
+        </view>
+
+        <!-- 年龄输入 -->
+        <view class="form-item">
+          <text class="form-label">年龄</text>
+          <input 
+            class="form-input" 
+            placeholder="请输入年龄（选填）"
+            value="{{newMember.age}}"
+            bindinput="onMemberInput"
+            data-field="age"
+            type="number"
+            maxlength="3"
+          />
+        </view>
+
+        <!-- 特殊体质选择 -->
+        <view class="form-item">
+          <view class="form-label-row">
+            <text class="form-label">特殊体质</text>
+            <text class="form-subtitle">（多选，用于AI分析）</text>
+          </view>
+          <view class="tags-container">
+            <view 
+              wx:for="{{familyHealthTags}}" 
+              wx:key="name"
+              class="tag-item {{item.selected ? 'selected' : ''}}"
+              bindtap="toggleFamilyHealthTag"
+              data-index="{{index}}"
+            >
+              <text>{{item.name}}</text>
+            </view>
+          </view>
+        </view>
+
+        <!-- 已选择预览 -->
+        <view class="preview-section" wx:if="{{newMember.healthTags.length > 0}}">
+          <text class="preview-title">已选择的特殊体质：</text>
+          <view class="preview-tags">
+            <text 
+              wx:for="{{newMember.healthTags}}" 
+              wx:key="*this"
+              class="preview-tag"
+            >{{item}}
+            </text>
           </view>
         </view>
       </view>
 
-      <!-- 已选择预览 -->
-      <view class="preview-section" wx:if="{{newMember.healthTags.length > 0}}">
-        <text class="preview-title">已选择的特殊体质：</text>
-        <view class="preview-tags">
-          <text 
-            wx:for="{{newMember.healthTags}}" 
-            wx:key="*this"
-            class="preview-tag"
-          >
-            {{item}}
-          </text>
-        </view>
+      <!-- 温馨提示 -->
+      <view class="form-tips">
+        <text class="tip-title">💡 温馨提示</text>
+        <text class="tip-content">
+          添加家庭成员后，可以在首页切换视角。
+          系统会根据不同成员的特殊体质（如乳糖不耐受、过敏等）
+          提供个性化的食品安全建议。
+        </text>
       </view>
-    </view>
-
-    <!-- 温馨提示 -->
-    <view class="form-tips">
-      <text class="tip-title">💡 温馨提示</text>
-      <text class="tip-content">
-        添加家庭成员后，可以在首页切换视角。
-        系统会根据不同成员的特殊体质（如乳糖不耐受、过敏等）
-        提供个性化的食品安全建议。
-      </text>
     </view>
   </view>
 
   <!-- 正常状态下的个人中心页面 -->
   <view class="main-content" wx:if="{{!editingProfile && !showAddFamily && !showFamilyList}}">
     <!-- 当前视角展示 -->
-    <view class="perspective-card" wx:if="{{currentMemberId && familyMembers.length > 0}}">
+    <!-- <view class="perspective-card" wx:if="{{currentMemberId && familyMembers.length > 0}}">
       <view class="perspective-info">
         <text class="perspective-icon">👁️</text>
         <view class="perspective-text">
@@ -327,7 +380,7 @@
       <button class="switch-perspective-btn" bindtap="showFamilyList">
         切换
       </button>
-    </view>
+    </view> -->
 
     <!-- 用户画像展示 -->
     <view class="profile-card" wx:if="{{isLoggedIn}}">

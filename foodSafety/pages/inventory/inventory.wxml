@@ -58,6 +58,12 @@
             <text class="stat-number">{{stats.expired}}</text>
             <text class="stat-label">过期</text>
           </view>
+          
+          <!-- 添加已消耗统计 -->
+          <view class="stat-item consumed {{stats.consumed > 0 ? 'active' : ''}}">
+            <text class="stat-number">{{stats.consumed}}</text>
+            <text class="stat-label">已消耗</text>
+          </view>
         </view>
         
         <view wx:if="{{stats.expiringSoon > 0}}" class="warning-tip">
@@ -77,8 +83,7 @@
               bindtap="switchFilter" 
               data-status="{{item.id}}">
               <text class="filter-tag-name">{{item.name}}</text>
-              <text class="filter-tag-count {{item.count > 0 ? 'has-count' : ''}}">
-                {{item.count}}
+              <text class="filter-tag-count {{item.count > 0 ? 'has-count' : ''}}">{{item.count}}
               </text>
             </view>
           </block>
@@ -111,7 +116,8 @@
         <text class="section-title">
           {{filterStatus === null ? '全部商品' : 
             filterStatus === 1 ? '新鲜商品' :
-            filterStatus === 2 ? '临期商品' : '过期商品'}}
+            filterStatus === 2 ? '临期商品' :
+            filterStatus === 3 ? '过期商品' : '已消耗商品'}}
           ({{filteredList.length}})
         </text>
         <text wx:if="{{filterStatus === 3 && filteredList.length > 0}}" 
@@ -123,7 +129,7 @@
       
       <scroll-view class="inventory-list" scroll-y="true" enable-back-to-top>
         <block wx:for="{{filteredList}}" wx:key="id">
-          <view class="inventory-item {{item.status === 3 ? 'expired' : item.status === 2 ? 'expiring' : ''}}">
+          <view class="inventory-item {{item.status === 3 ? 'expired' : item.status === 2 ? 'expiring' : item.status === 4 ? 'consumed' : ''}}">
             <view class="item-main" bindtap="viewProductDetail" data-item="{{item}}">
               <!-- 商品图片 -->
               <view class="item-image">
@@ -133,8 +139,16 @@
                   lazy-load="true"
                   class="product-image"
                 ></image>
-                <view class="status-badge status-{{item.status}}">
-                  <text class="iconfont {{item.statusIcon || 'icon-fresh'}}"></text>
+                <!-- <view class="status-badge status-{{item.status}}">
+                  <text class="iconfont 
+                    {{item.status === 1 ? 'icon-fresh' : 
+                      item.status === 2 ? 'icon-warning' : 
+                      item.status === 3 ? 'icon-error' : 
+                      item.status === 4 ? 'icon-check' : 'icon-fresh'}}"></text>
+                </view> -->
+                <!-- 已消耗标签 -->
+                <view class="consumed-label" wx:if="{{item.status === 4}}">
+                  <text class="consumed-text">已消耗</text>
                 </view>
               </view>
               
@@ -142,13 +156,12 @@
               <view class="item-info">
                 <view class="item-header">
                   <text class="product-name">{{item.productName || '未知商品'}}</text>
-                  <text class="days-left {{item.status === 3 ? 'danger' : item.status === 2 ? 'warning' : 'safe'}}">
-                    {{item.daysText || ''}}
+                  <text class="days-left {{item.status === 3 ? 'danger' : item.status === 2 ? 'warning' : item.status === 4 ? 'consumed' : 'safe'}}"> {{item.status === 4 ? '已消耗' : (item.daysText || '')}}
                   </text>
                 </view>
                 
                 <view class="item-meta">
-                  <text class="expiry-date">
+                  <text class="expiry-date" wx:if="{{item.expiryDate && item.status !== 4}}">
                     <text class="iconfont icon-calendar"></text>
                     过期: {{item.displayDate || '未设置'}}
                   </text>
@@ -156,19 +169,26 @@
                     <text class="iconfont icon-shopping"></text>
                     购买: {{item.purchaseDate}}
                   </text>
+                  <text wx:if="{{item.status === 4 && item.addTime}}" class="consume-time">
+                    <text class="iconfont icon-time"></text>
+                    消耗: {{item.displayTime || item.addTime}}
+                  </text>
                 </view>
                 
                 <view class="item-status">
-                  <text class="status-text" style="color: {{item.statusColor}};">
-                    {{item.statusText || '新鲜'}}
-                  </text>
-                  <text class="status-msg">{{item.statusMsg || ''}}</text>
+                  <text class="status-text" style="color: {{getStatusColor(item.status)}};"> {{getStatusText(item.status)}}
+                  </text><text class="status-msg">{{item.statusMsg}}</text>
                 </view>
               </view>
             </view>
             
-            <!-- 操作按钮 -->
+            <!-- 操作按钮（根据状态显示） -->
             <view class="item-actions">
+              <button class="action-btn consume" bindtap="confirmConsume" 
+                      data-id="{{item.id}}" data-name="{{item.productName}}">
+                <text class="iconfont icon-check"></text>
+                <text>消耗</text>
+              </button>
               <button class="action-btn edit" bindtap="editInventoryItem" data-item="{{item}}">
                 <text class="iconfont icon-edit"></text>
                 <text>编辑</text>
@@ -179,18 +199,20 @@
                 <text>移除</text>
               </button>
             </view>
+            
+            <!-- 已消耗状态提示 -->
+            <view class="consumed-hint" wx:if="{{item.status === 4}}">
+              <text class="iconfont icon-info"></text>
+              <text>商品已消耗，无法编辑</text>
+            </view>
           </view>
         </block>
       </scroll-view>
     </view>
   </view>
-  
-  <!-- 悬浮按钮 -->
-  <view class="floating-buttons">
-    <button class="fab primary-fab" bindtap="quickScanAdd">
-      <text class="iconfont icon-add"></text>
-      <text class="fab-text">扫码添加</text>
-    </button>
+
+  <view class="floating-buttons" bindtap="quickScanAdd">
+    <image src="/assets/icons/add.png" class="add-icon" mode="aspectFit" />
   </view>
   
   <!-- 编辑弹窗 -->
@@ -292,6 +314,32 @@
     </view>
   </view>
   
+  <!-- 消耗确认弹窗 -->
+  <view wx:if="{{showConsumeConfirm}}" class="modal-overlay">
+    <view class="modal-content consume-modal">
+      <view class="modal-header">
+        <text class="modal-title">标记为已消耗</text>
+        <text class="iconfont icon-close" bindtap="closeConsumeConfirm"></text>
+      </view>
+      
+      <view class="modal-body">
+        <view class="consume-icon">
+          <text class="iconfont icon-check-circle"></text>
+        </view>
+        <text class="consume-message">{{consumeConfirmMessage}}</text>
+        <view class="consume-tips">
+          <text class="iconfont icon-tips"></text>
+          <text>标记为消耗后，商品将从新鲜/临期/过期列表中移除</text>
+        </view>
+      </view>
+      
+      <view class="modal-footer">
+        <button class="btn cancel" bindtap="closeConsumeConfirm">取消</button>
+        <button class="btn success confirm" bindtap="executeConsume">确认消耗</button>
+      </view>
+    </view>
+  </view>
+  
   <!-- 底部操作栏 -->
   <view class="bottom-actions">
     <button class="action-button" bindtap="viewExpirySuggestions">
@@ -351,7 +399,7 @@
         <text class="preview-text">
           {{formatDateDisplay(datePickerValue)}}
         </text>
-        <text class="preview-days" wx:if="{{currentDateField === 'expiryDate' && editForm.purchaseDate}}">
+        <text class="preview-days" wx:if="{{currentDataField === 'expiryDate' && editForm.purchaseDate}}">
           还有 {{calculateDaysBetween(editForm.purchaseDate, datePickerValue)}} 天
         </text>
       </view>

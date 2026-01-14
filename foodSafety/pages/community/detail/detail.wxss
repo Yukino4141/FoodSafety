@@ -1,0 +1,270 @@
+/* pages/community/detail/detail.wxss */
+.post-detail-page {
+  min-height: 100vh;
+  background: #f5f5f5;
+  padding-bottom: 120rpx;
+}
+
+/* 帖子卡片 */
+.post-card {
+  background: white;
+  padding: 30rpx;
+  margin-bottom: 20rpx;
+}
+
+/* 用户信息 */
+.user-info {
+  display: flex;
+  align-items: center;
+  margin-bottom: 25rpx;
+}
+
+.user-avatar {
+  width: 70rpx;
+  height: 70rpx;
+  border-radius: 50%;
+  margin-right: 20rpx;
+}
+
+.user-details {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.user-name {
+  font-size: 28rpx;
+  font-weight: 600;
+  color: #333;
+  margin-bottom: 5rpx;
+}
+
+.post-time {
+  font-size: 22rpx;
+  color: #95a5a6;
+}
+
+/* 帖子内容 */
+.post-title {
+  margin-bottom: 20rpx;
+}
+
+.title-text {
+  font-size: 32rpx;
+  font-weight: bold;
+  color: #333;
+  line-height: 1.4;
+}
+
+.post-content {
+  margin-bottom: 25rpx;
+}
+
+.content-text {
+  font-size: 28rpx;
+  color: #555;
+  line-height: 1.6;
+}
+
+/* 图片 */
+.post-images {
+  margin-bottom: 25rpx;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10rpx;
+}
+
+.image-item {
+  width: 220rpx;
+  height: 220rpx;
+  border-radius: 12rpx;
+  overflow: hidden;
+}
+
+.post-image {
+  width: 100%;
+  height: 100%;
+}
+
+/* 操作栏 */
+.post-actions {
+  display: flex;
+  justify-content: space-around;
+  padding-top: 20rpx;
+  border-top: 1rpx solid #f0f0f0;
+}
+
+.action-item {
+  display: flex;
+  align-items: center;
+  padding: 15rpx 25rpx;
+  color: #7f8c8d;
+  font-size: 26rpx;
+}
+
+.action-item.liked {
+  color: #e74c3c;
+}
+
+.action-count {
+  margin-left: 10rpx;
+}
+
+/* 评论区 */
+.comments-title {
+  padding: 20rpx 30rpx;
+  background: white;
+  margin-bottom: 10rpx;
+}
+
+.comments-title .title {
+  font-size: 28rpx;
+  font-weight: 600;
+  color: #333;
+}
+
+.loading-comments {
+  padding: 40rpx;
+  text-align: center;
+  color: #95a5a6;
+  font-size: 26rpx;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 15rpx;
+}
+
+.empty-comments {
+  padding: 60rpx;
+  text-align: center;
+  color: #bdc3c7;
+  font-size: 26rpx;
+  background: white;
+  margin: 0 30rpx;
+  border-radius: 16rpx;
+}
+
+.comments-list {
+  background: white;
+  margin: 0 30rpx;
+  border-radius: 16rpx;
+  max-height: 400rpx;
+}
+
+.comment-item {
+  padding: 20rpx;
+  display: flex;
+  border-bottom: 1rpx solid #f0f0f0;
+}
+
+.comment-avatar {
+  width: 60rpx;
+  height: 60rpx;
+  border-radius: 50%;
+  margin-right: 20rpx;
+  flex-shrink: 0;
+}
+
+.comment-content-wrap {
+  flex: 1;
+}
+
+.comment-header {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 10rpx;
+}
+
+.comment-username {
+  font-size: 26rpx;
+  font-weight: 600;
+  color: #333;
+}
+
+.comment-time {
+  font-size: 20rpx;
+  color: #95a5a6;
+  margin-right: 20px;
+}
+
+.comment-text {
+  font-size: 26rpx;
+  color: #555;
+  line-height: 1.5;
+}
+
+.load-more-comments {
+  padding: 20rpx;
+  text-align: center;
+  color: #95a5a6;
+  font-size: 24rpx;
+}
+
+/* 评论输入框 */
+.comment-input-bar {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: white;
+  padding: 20rpx 30rpx;
+  display: flex;
+  align-items: center;
+  border-top: 1rpx solid #f0f0f0;
+}
+
+.comment-input {
+  flex: 1;
+  height: 70rpx;
+  background: #f5f5f5;
+  border-radius: 35rpx;
+  padding: 0 20rpx;
+  font-size: 26rpx;
+}
+
+.submit-btn {
+  background: #2ecc71;
+  color: white;
+  border-radius: 35rpx;
+  padding: 15rpx 30rpx;
+  margin-left: 20rpx;
+  max-width: 100px;
+  font-size: 26rpx;
+}
+
+.submit-btn[disabled] {
+  background: #bdc3c7;
+  color: white;
+}
+
+/* 未登录提示 */
+.login-tip {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: white;
+  padding: 25rpx;
+  text-align: center;
+  border-top: 1rpx solid #f0f0f0;
+}
+
+.tip-text {
+  font-size: 26rpx;
+  color: #95a5a6;
+}
+
+/* 复用加载动画 */
+.mini-spinner {
+  width: 30rpx;
+  height: 30rpx;
+  border: 4rpx solid #f3f3f3;
+  border-top: 4rpx solid #2ecc71;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
