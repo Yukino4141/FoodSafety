@@ -71,4 +71,11 @@ public class CommunityController {
                                           @RequestParam(defaultValue = "10") Integer pageSize) {
         return Result.success(communityService.commentList(postId, page, pageSize));
     }
+
+    @DeleteMapping("/post/{id}")
+    @ApiOperation("删除本人帖子")
+    public Result<String> deletePost(@PathVariable Long id) {
+        communityService.deletePost(id);
+        return Result.success("success");
+    }
 }

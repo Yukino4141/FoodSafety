@@ -25,4 +25,7 @@ public interface PostCommentMapper {
 
     @org.apache.ibatis.annotations.Select("select count(*) from post_comment where post_id = #{postId}")
     Long countByPostId(Long postId);
+
+    @org.apache.ibatis.annotations.Delete("delete from post_comment where post_id = #{postId}")
+    int deleteByPostId(Long postId);
 }

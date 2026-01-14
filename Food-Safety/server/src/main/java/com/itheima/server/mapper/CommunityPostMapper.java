@@ -22,4 +22,7 @@ public interface CommunityPostMapper {
 
     @org.apache.ibatis.annotations.Update("update community_post set view_count = #{viewCount} where id = #{id}")
     int updateViewCount(Long id, Integer viewCount);
+
+    @org.apache.ibatis.annotations.Delete("delete from community_post where id = #{id}")
+    int deleteById(Long id);
 }

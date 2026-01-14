@@ -22,6 +22,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
 import java.time.LocalDateTime;
@@ -166,6 +167,22 @@ public class CommunityServiceImpl implements CommunityService {
                         .build())
                 .collect(Collectors.toList());
         return new PageResult(p.getTotal(), records);
+    }
+
+    @Override
+    @Transactional
+    public void deletePost(Long id) {
+        CommunityPost post = communityPostMapper.getById(id);
+        if (post == null) {
+            throw new RuntimeException("帖子不存在");
+        }
+        Long userId = BaseContext.getCurrentId();
+        if (!Objects.equals(post.getUserId(), userId)) {
+            throw new RuntimeException("无权限操作");
+        }
+        postLikeMapper.deleteByPostId(id);
+        postCommentMapper.deleteByPostId(id);
+        communityPostMapper.deleteById(id);
     }
 
     private PostVO toVO(CommunityPost post) {

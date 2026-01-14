@@ -21,4 +21,6 @@ public interface CommunityService {
     Long comment(CommentDTO dto);
 
     PageResult commentList(Long postId, Integer page, Integer pageSize);
+
+    void deletePost(Long id);
 }
