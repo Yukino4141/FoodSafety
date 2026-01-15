@@ -15,8 +15,8 @@ food-safety:
     host: localhost
     port: 6379
   wechat:
-    appid: xxx
-    secret: xxx
+    appid: wx6d967f084becd6f3
+    secret: aeafa238a64b98fe4858b61d7c2ac098
   ai:
     api-url: xxx
     api-key: xxx

@@ -4,7 +4,7 @@ App({
     userInfo: null,
     token: null,
     isLoggedIn: false,
-    baseURL: 'http://localhost:8080', // 确保这是你的后端地址
+    baseURL: 'http://172.16.0.32:8080', // 确保这是你的后端地址
     env: 'prod', // 改为生产环境
     
     userProfile: null,
