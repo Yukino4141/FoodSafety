@@ -7,6 +7,7 @@ import com.itheima.common.untils.AliOssUtil;
 import com.itheima.pojo.dto.AiAnalyzeDTO;
 import com.itheima.pojo.dto.AiAnalysisResult;
 import com.itheima.pojo.vo.AiAnalyzeVO;
+import com.itheima.pojo.vo.IngredientRiskVO;
 import com.itheima.pojo.vo.OcrResultVO;
 import com.itheima.server.service.AiService;
 import lombok.extern.slf4j.Slf4j;
@@ -292,4 +293,69 @@ public class AiServiceImpl implements AiService {
             throw new RuntimeException("OCR 识别失败，请稍后重试");
         }
     }
+
+    @Override
+    public IngredientRiskVO checkIngredientRisk(String ingredient) {
+        if (ingredient == null || ingredient.trim().isEmpty()) {
+            throw new RuntimeException("配料名称不能为空");
+        }
+
+        String prompt = buildIngredientCheckPrompt(ingredient.trim());
+        String content = callChatModel(prompt);
+        return parseIngredientRiskResult(ingredient.trim(), content);
+    }
+
+    private String buildIngredientCheckPrompt(String ingredient) {
+        return "你是一名食品安全专家，请分析以下食品配料的安全性。只输出 JSON 对象，不要输出任何其他内容。" +
+                "配料名称：" + ingredient + "。" +
+                "请返回以下字段的 JSON：" +
+                "score: 0-100 的整数表示安全分数，分数越高越安全，80-100分为安全，40-79分为中风险，0-39分为高风险; " +
+                "riskLevel: 风险等级数字，0=安全,1=中风险,2=高风险; " +
+                "description: 简短说明该配料是什么以及其用途（不超过50字）; " +
+                "suggestion: 健康建议（不超过100字）。" +
+                "输出要求：只返回单个 JSON 对象，不要使用 Markdown、不要使用代码块。" +
+                "示例: {\"score\":85,\"riskLevel\":0,\"description\":\"白砂糖是常见甜味剂\",\"suggestion\":\"适量食用\"}";
+    }
+
+    private IngredientRiskVO parseIngredientRiskResult(String ingredient, String content) {
+        try {
+            String cleaned = extractJsonObject(content);
+            JSONObject obj = JSON.parseObject(cleaned);
+            
+            int score = obj.getInteger("score") == null ? 50 : obj.getInteger("score");
+            int riskLevel = obj.getInteger("riskLevel") == null ? 1 : obj.getInteger("riskLevel");
+            
+            if (score >= 80) riskLevel = 0;
+            else if (score >= 40) riskLevel = 1;
+            else riskLevel = 2;
+            
+            String riskLevelText;
+            switch (riskLevel) {
+                case 0: riskLevelText = "低风险"; break;
+                case 1: riskLevelText = "中风险"; break;
+                case 2: riskLevelText = "高风险"; break;
+                default: riskLevelText = "未知"; break;
+            }
+            
+            return IngredientRiskVO.builder()
+                    .ingredient(ingredient)
+                    .score(score)
+                    .riskLevel(riskLevel)
+                    .riskLevelText(riskLevelText)
+                    .description(obj.getString("description"))
+                    .suggestion(obj.getString("suggestion"))
+                    .build();
+        } catch (Exception e) {
+            log.warn("解析配料速查结果失败: {}", content, e);
+            return IngredientRiskVO.builder()
+                    .ingredient(ingredient)
+                    .score(50)
+                    .riskLevel(1)
+                    .riskLevelText("中风险")
+                    .description("暂无该配料的详细信息")
+                    .suggestion("建议适量食用，如有疑虑请咨询专业人士")
+                    .build();
+        }
+    }
 }
+

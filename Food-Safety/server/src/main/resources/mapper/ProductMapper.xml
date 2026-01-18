@@ -45,10 +45,12 @@
         </foreach>
     </delete>
 
-    <!-- 根据名称模糊搜索（用户端关键词搜索） -->
+    <!-- 根据名称或条形码搜索（用户端关键词搜索） -->
     <select id="listByName" resultType="com.itheima.pojo.entity.Product">
         SELECT * FROM product
         WHERE name LIKE CONCAT('%', #{name}, '%')
+           OR barcode = #{name}
+           OR barcode LIKE CONCAT('%', #{name}, '%')
         ORDER BY update_time DESC
     </select>
     <!-- 查询商品（管理端商品列表） -->

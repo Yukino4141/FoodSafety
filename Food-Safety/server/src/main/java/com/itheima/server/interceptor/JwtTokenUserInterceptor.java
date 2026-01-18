@@ -29,6 +29,18 @@ public class JwtTokenUserInterceptor implements HandlerInterceptor {
 
         // 1. 从请求头中获取令牌 (authentication)
         String token = request.getHeader(jwtProperties.getUserTokenName());
+        
+        // 如果标准头部没有获取到，尝试从其他常见头部获取（兼容微信小程序）
+        if (token == null || token.trim().isEmpty()) {
+            token = request.getHeader("Authorization");
+            if (token != null && token.startsWith("Bearer ")) {
+                token = token.substring(7);
+            }
+        }
+        
+        if (token == null || token.trim().isEmpty()) {
+            token = request.getHeader("token");
+        }
 
         try {
             log.info("C端用户拦截器: jwt校验: {}", token);
@@ -41,6 +53,7 @@ public class JwtTokenUserInterceptor implements HandlerInterceptor {
             log.info("当前用户ID: {}", userId);
             return true;
         } catch (Exception e) {
+            log.error("JWT验证失败: {}", e.getMessage());
             response.setStatus(401);
             return false;
         }
