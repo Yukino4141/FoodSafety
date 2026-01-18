@@ -2,7 +2,9 @@ package com.itheima.server.controller.user;
 
 import com.itheima.common.result.Result;
 import com.itheima.pojo.dto.AiAnalyzeDTO;
+import com.itheima.pojo.dto.IngredientQueryDTO;
 import com.itheima.pojo.vo.AiAnalyzeVO;
+import com.itheima.pojo.vo.IngredientRiskVO;
 import com.itheima.pojo.vo.OcrResultVO;
 import com.itheima.server.service.AiService;
 import io.swagger.annotations.Api;
@@ -35,4 +37,12 @@ public class AiController {
     public Result<AiAnalyzeVO> analyze(@RequestBody AiAnalyzeDTO dto) {
         return Result.success(aiService.analyze(dto));
     }
+
+    @PostMapping("/ingredient-check")
+    @ApiOperation("配料速查-查询单个配料风险")
+    public Result<IngredientRiskVO> ingredientCheck(@RequestBody IngredientQueryDTO dto) {
+        log.info("配料速查: {}", dto.getIngredient());
+        return Result.success(aiService.checkIngredientRisk(dto.getIngredient()));
+    }
 }
+
