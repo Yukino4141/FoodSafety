@@ -124,23 +124,23 @@ Page({
         color: 'purple',
         url: '/pages/favorites/favorites'
       },
-      {
-        id: 5,
-        text: '购物清单',
-        desc: '待购买商品清单',
-        icon: '🛒',
-        color: 'teal',
-        url: '/pages/shopping/shopping',
-        badge: 5
-      },
-      {
-        id: 6,
-        text: '意见反馈',
-        desc: '帮助我们改进',
-        icon: '💬',
-        color: 'red',
-        url: '/pages/feedback/feedback'
-      }
+      // {
+      //   id: 5,
+      //   text: '购物清单',
+      //   desc: '待购买商品清单',
+      //   icon: '🛒',
+      //   color: 'teal',
+      //   url: '/pages/shopping/shopping',
+      //   badge: 5
+      // },
+      // {
+      //   id: 6,
+      //   text: '意见反馈',
+      //   desc: '帮助我们改进',
+      //   icon: '💬',
+      //   color: 'red',
+      //   url: '/pages/feedback/feedback'
+      // }
     ]
   },
 

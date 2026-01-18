@@ -29,14 +29,6 @@ Page({
     // 功能入口
     features: [
       {
-        id: 1,
-        icon: '/assets/icons/ingredient.png',
-        title: '配料速查',
-        desc: '添加剂风险字典',
-        url: '/pages/ingredients/ingredients',
-        color: '#2ecc71'
-      },
-      {
         id: 2,
         icon: '/assets/icons/history.png',
         title: '我的冰箱',
@@ -51,22 +43,6 @@ Page({
         desc: '分享食品安全经验',
         url: '/pages/community/community',
         color: '#e74c3d'
-      },
-      {
-        id: 4,
-        icon: '/assets/icons/news.png',
-        title: '食安科普',
-        desc: '每日知识更新',
-        url: '/pages/knowledge/knowledge',
-        color: '#e67e22'
-      },
-      {
-        id: 5,
-        icon: '/assets/icons/setting.png',  // 偏好设置
-        title: '偏好设置',
-        desc: '过敏原管理',
-        url: '/pages/preference/preference',
-        color: '#9b59b6'
       },
       {
         id: 6,

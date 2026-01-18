@@ -135,53 +135,129 @@ Page({
   },
 
   // 执行OCR识别
-  async performOCR(imagePath) {
-    wx.showLoading({
-      title: '正在识别...',
-      mask: true
+// 执行OCR识别
+async performOCR(imagePath) {
+  wx.showLoading({
+    title: '正在识别...',
+    mask: true
+  });
+
+  // 确保 baseUrl 存在且正确
+  const baseUrl = 'http://localhost:8080';
+  const token = app.globalData.token;
+  
+  if (!baseUrl) {
+    wx.hideLoading();
+    wx.showToast({
+      title: '服务器配置错误',
+      icon: 'none'
+    });
+    return;
+  }
+
+  try {
+    // 构建完整URL
+    const fullUrl = baseUrl.endsWith('/') 
+      ? `${baseUrl}user/ai/ocr`
+      : `${baseUrl}/user/ai/ocr`;
+    
+    console.log('OCR请求URL:', fullUrl, 'Token:', token ? '有' : '无');
+
+    // 使用 wx.uploadFile 上传文件
+    const ocrResult = await new Promise((resolve, reject) => {
+      const header = {};
+      
+      // 如果有 token，添加到请求头
+      if (token) {
+        header['Authorization'] = `Bearer ${token}`;
+      }
+      
+      wx.uploadFile({
+        url: fullUrl,
+        filePath: imagePath,
+        name: 'file',
+        header: header, // 添加请求头
+        formData: {
+          'timestamp': Date.now()
+        },
+        success: (res) => {
+          console.log('OCR响应状态码:', res.statusCode);
+          console.log('OCR响应数据:', res.data);
+          
+          if (res.statusCode === 200) {
+            try {
+              const data = JSON.parse(res.data);
+              if (data.code === 1 || data.code === 200) {
+                resolve(data.data || data);
+              } else if (data.code === 401) {
+                // token 无效，需要重新登录
+                app.handleUnauthorized();
+                reject(new Error('登录已过期，请重新登录'));
+              } else {
+                reject(new Error(data.message || data.msg || '识别失败'));
+              }
+            } catch (e) {
+              console.error('解析JSON失败:', e, '原始响应:', res.data);
+              reject(new Error('服务器响应格式错误'));
+            }
+          } else if (res.statusCode === 401) {
+            reject(new Error('登录已过期，请重新登录'));
+          } else {
+            reject(new Error(`请求失败，状态码: ${res.statusCode}`));
+          }
+        },
+        fail: (err) => {
+          console.error('上传文件失败:', err);
+          reject(new Error(err.errMsg || '上传失败'));
+        }
+      });
     });
 
-    try {
-      // 调用后端的OCR接口
-      const ocrResult = await app.request('/user/ai/ocr', 'POST', {
-        image: imagePath
-      }, false);
+    console.log('OCR识别结果:', ocrResult);
 
-      console.log('OCR识别结果:', ocrResult);
-
-      if (ocrResult && ocrResult.text) {
-        this.setData({
-          ocrResult: ocrResult.text
-        });
-        
-        wx.showToast({
-          title: '识别成功',
-          icon: 'success'
-        });
-      } else {
-        wx.showToast({
-          title: '未识别到文字',
-          icon: 'none'
-        });
+    if (ocrResult && (ocrResult.rawText || ocrResult.ingredients)) {
+      // 优先使用提取后的配料数组，如果没有则使用原始文本
+      let displayText = '';
+      
+      if (ocrResult.ingredients && Array.isArray(ocrResult.ingredients)) {
+        displayText = ocrResult.ingredients.join('\n');
+      } else if (ocrResult.rawText) {
+        displayText = ocrResult.rawText;
       }
-
-    } catch (error) {
-      console.error('OCR识别失败:', error);
+      
+      this.setData({
+        ocrResult: displayText
+      });
       
       wx.showToast({
-        title: error.message || '识别失败',
+        title: '识别成功',
+        icon: 'success'
+      });
+    } else {
+      wx.showToast({
+        title: '未识别到文字',
         icon: 'none'
       });
-      
-      // 识别失败时，允许手动输入
-      this.setData({
-        ocrResult: '识别失败，请手动输入配料...'
-      });
-
-    } finally {
-      wx.hideLoading();
     }
-  },
+
+  } catch (error) {
+    console.error('OCR识别失败:', error);
+    
+    wx.showToast({
+      title: error.message || '识别失败',
+      icon: 'none',
+      duration: 2000
+    });
+    
+    // 识别失败时，允许手动输入
+    this.setData({
+      ocrResult: '识别失败，请手动输入配料...'
+    });
+
+  } finally {
+    wx.hideLoading();
+  }
+},
 
   // 编辑OCR结果
   editOCRResult() {

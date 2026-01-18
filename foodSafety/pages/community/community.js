@@ -91,6 +91,20 @@ Page({
     
     try {
       const result = await app.getPostFeed(params);
+
+      const formattedPosts = (result.list || []).map(post => {
+        // 确保所有必需的字段都存在
+        return {
+          ...post,
+          isLiked: post.liked || false, // 注意：后端可能返回的是 'liked' 字段
+          likeCount: post.likeCount || 0,
+          commentCount: post.commentCount || 0,
+          viewCount: post.viewCount || 0,
+          hasImages: !!(post.images && post.images.length > 0),
+          userAvatar: post.userAvatar || '/assets/images/default-avatar.png',
+          userNickname: post.userNickname || '匿名用户'
+        };
+      });
       
       const newPosts = isRefresh ? result.list : [...this.data.posts, ...result.list];
       
@@ -109,7 +123,7 @@ Page({
         });
       }
       
-      return result.list;
+      return formattedPosts;
       
     } catch (error) {
       console.error('加载帖子失败:', error);

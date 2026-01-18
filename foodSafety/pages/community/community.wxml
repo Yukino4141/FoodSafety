@@ -91,8 +91,7 @@
             class="image-item"
             data-index="{{index}}"
             data-images="{{item.images}}"
-            bindtap="previewImage"
-            catchtap="true" 
+            catchtap="previewImage"
           >
             <image class="post-image" src="{{img}}" mode="aspectFill" />
           </view>
@@ -105,8 +104,7 @@
             class="action-item {{item.isLiked ? 'liked' : ''}}"
             data-id="{{item.id}}"
             data-index="{{index}}"
-            bindtap="toggleLike"
-            catchtap="true"
+            catchtap="toggleLike"
           >
             <image 
               src="{{item.isLiked ? '/assets/icons/liked.png' : '/assets/icons/like.png'}}" 

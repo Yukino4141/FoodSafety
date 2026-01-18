@@ -145,7 +145,7 @@ Page({
       let history = await app.getScanHistory();
       console.log('获取到历史记录:', history.length, '条');
       
-         // ========== 在页面层进行去重 ==========
+      // ========== 在页面层进行去重 ==========
       history = this.deduplicateHistory(history);
       console.log('去重后历史记录:', history.length, '条');
 
@@ -153,7 +153,7 @@ Page({
       const stats = this.calculateStats(history);
       
       // 应用筛选
-      const filteredList = this.applyFilter(history, this.data.filterStatus);
+      const filteredList = this.applyFilterWithDeduplication(history, this.data.filterStatus);
       
       this.setData({
         historyList: filteredList,
@@ -177,69 +177,171 @@ Page({
       wx.hideLoading();
     }
   },
-  // 根据商品名称和条形码智能去重
+
+  // 智能去重方法
   deduplicateHistory(historyList) {
-    if (!Array.isArray(historyList)) return [];
+    if (!Array.isArray(historyList) || historyList.length <= 1) {
+      return historyList || [];
+    }
     
-    // 使用组合key进行去重：商品ID + 条形码 + 商品名称
-    const uniqueMap = new Map();
+    // 按扫描时间排序，最新的在前面
+    const sortedList = [...historyList].sort((a, b) => {
+      const timeA = new Date(a.updateTime || a.scanTime || a.createTime || 0).getTime();
+      const timeB = new Date(b.updateTime || b.scanTime || b.createTime || 0).getTime();
+      return timeB - timeA; // 降序，最新的在前
+    });
     
-    historyList.forEach(item => {
-      // 构建唯一标识符
-      const key = this.generateUniqueKey(item);
+    const result = [];
+    const seenKeys = new Set();
+    
+    sortedList.forEach((item, index) => {
+      // 生成主要标识符
+      const primaryKey = this.generatePrimaryKey(item);
       
-      if (key) {
-        const existingItem = uniqueMap.get(key);
-        if (existingItem) {
-          // 比较扫描时间，保留最新的
-          const existingTime = new Date(existingItem.updateTime || existingItem.scanTime || 0);
-          const currentTime = new Date(item.updateTime || item.scanTime || 0);
-          
-          if (currentTime > existingTime) {
-            uniqueMap.set(key, item);
+      if (primaryKey && seenKeys.has(primaryKey)) {
+        // 已存在相同主要标识符，跳过
+        return;
+      }
+      
+      // 检查是否与已有记录高度相似（但主要标识符不同）
+      let isDuplicate = false;
+      
+      if (result.length > 0) {
+        // 检查最近10条记录
+        const recentItems = result.slice(0, Math.min(10, result.length));
+        
+        for (const existingItem of recentItems) {
+          if (this.isSimilarItem(item, existingItem)) {
+            isDuplicate = true;
+            break;
           }
-        } else {
-          uniqueMap.set(key, item);
+        }
+      }
+      
+      if (!isDuplicate) {
+        result.push(item);
+        if (primaryKey) {
+          seenKeys.add(primaryKey);
         }
       }
     });
     
-    return Array.from(uniqueMap.values());
+    console.log('智能去重完成:', {
+      原始条数: historyList.length,
+      去重后条数: result.length,
+      去重率: ((historyList.length - result.length) / historyList.length * 100).toFixed(1) + '%'
+    });
+    
+    return result;
   },
 
-  // 生成唯一标识符
-  generateUniqueKey(item) {
-    // 优先级1: 商品ID + 条形码
-    if (item.id && item.barcode) {
-      return `${item.id}_${item.barcode}`;
+  // 检查两个商品是否相似
+  isSimilarItem(item1, item2) {
+    // 1. 检查条形码是否相同
+    if (item1.barcode && item2.barcode && item1.barcode === item2.barcode) {
+      return true;
     }
     
-    // 优先级2: 仅商品ID
-    if (item.id || item.productId) {
-      return String(item.id || item.productId);
+    // 2. 检查商品ID是否相同
+    const id1 = item1.id || item1.productId;
+    const id2 = item2.id || item2.productId;
+    if (id1 && id2 && id1 === id2) {
+      return true;
     }
     
-    // 优先级3: 仅条形码
+    // 3. 检查名称相似度
+    if (item1.name && item2.name) {
+      const normalizedName1 = this.normalizeString(item1.name);
+      const normalizedName2 = this.normalizeString(item2.name);
+      
+      // 如果标准化后的名称相同，认为是相同商品
+      if (normalizedName1 && normalizedName2 && normalizedName1 === normalizedName2) {
+        return true;
+      }
+      
+      // 如果名称包含关系，也可能是相同商品
+      if (normalizedName1.includes(normalizedName2) || normalizedName2.includes(normalizedName1)) {
+        // 检查时间间隔，如果时间很近，可能是相同商品
+        const time1 = new Date(item1.updateTime || item1.scanTime || item1.createTime || 0).getTime();
+        const time2 = new Date(item2.updateTime || item2.scanTime || item2.createTime || 0).getTime();
+        const timeDiff = Math.abs(time1 - time2);
+        
+        // 如果时间差在24小时内，认为是相同商品的重复扫描
+        if (timeDiff < 24 * 60 * 60 * 1000) {
+          return true;
+        }
+      }
+    }
+    
+    return false;
+  },
+
+  // 生成主要标识符
+  generatePrimaryKey(item) {
+    // 优先使用条形码
     if (item.barcode) {
-      return item.barcode;
+      return `barcode_${item.barcode}`;
     }
     
-    // 优先级4: 商品名称 + 品牌（如果都有）
-    if (item.name && item.brand) {
-      return `${item.name}_${item.brand}`;
+    // 其次使用商品ID
+    if (item.id || item.productId) {
+      return `id_${item.id || item.productId}`;
     }
     
-    // 优先级5: 仅商品名称
+    // 最后使用标准化名称
     if (item.name) {
-      return item.name;
+      return `name_${this.normalizeString(item.name)}`;
     }
     
-    // 无法生成唯一key
-    console.warn('无法为历史记录项生成唯一key:', item);
     return null;
   },
 
-  // 计算统计信息（需要修改以处理去重后的数据）
+  // 标准化字符串（移除空格、转换为小写等）
+  normalizeString(str) {
+    if (!str) return '';
+    
+    return str
+      .toString()
+      .toLowerCase()
+      .replace(/\s+/g, '') // 移除所有空格
+      .replace(/[^\w\u4e00-\u9fa5]/g, '') // 移除特殊字符，保留中文、英文、数字
+      .trim();
+  },
+
+  // 获取安全状态
+  getSafetyStatus(item) {
+    if (item.safetyStatus) return item.safetyStatus;
+    if (item.safetyInfo && item.safetyInfo.status) return item.safetyInfo.status;
+    if (item.riskLevel) return item.riskLevel;
+    if (item.status) return item.status;
+    
+    // 根据安全分数推断
+    if (item.safetyScore !== undefined) {
+      if (item.safetyScore >= 80) return 'SAFE';
+      if (item.safetyScore >= 60) return 'RISK';
+      return 'DANGER';
+    }
+    
+    return 'SAFE';
+  },
+
+  // 带去重的筛选方法
+  applyFilterWithDeduplication(history, filterStatus) {
+    if (filterStatus === 'all') {
+      return history; // 已经去重过了
+    }
+    
+    // 筛选
+    const filteredList = history.filter(item => {
+      const status = this.getSafetyStatus(item);
+      return status === filterStatus;
+    });
+    
+    // 对筛选结果去重
+    return this.deduplicateHistory(filteredList);
+  },
+
+  // 计算统计信息
   calculateStats(history) {
     const stats = {
       total: history.length,
@@ -249,8 +351,7 @@ Page({
     };
     
     history.forEach(item => {
-      // 根据处理后的安全状态统计
-      const status = item.safetyStatus || item.safetyInfo?.status || 'SAFE';
+      const status = this.getSafetyStatus(item);
       
       switch (status) {
         case 'SAFE':
@@ -266,18 +367,6 @@ Page({
     });
     
     return stats;
-  },
-
-  // 应用筛选（修改为使用处理后的安全状态）
-  applyFilter(history, filterStatus) {
-    if (filterStatus === 'all') {
-      return history;
-    }
-    
-    return history.filter(item => {
-      const status = item.safetyStatus || item.safetyInfo?.status || 'SAFE';
-      return status === filterStatus;
-    });
   },
 
   // 刷新数据
@@ -316,14 +405,6 @@ Page({
         loadingMore: false
       });
     }
-  },
-
-  // 应用筛选
-  applyFilter(history, filterStatus) {
-    if (filterStatus === 'all') {
-      return history;
-    }
-    return history.filter(item => item.safetyStatus === filterStatus);
   },
 
   // 处理加载错误
@@ -373,15 +454,24 @@ Page({
       filterStatus: filterStatus,
       loading: true
     }, async () => {
-      // 重新获取数据并应用筛选
+      // 重新获取数据
       try {
         const history = await app.getScanHistory();
-        const filteredList = this.applyFilter(history, filterStatus);
+        
+        // 对全部数据进行去重
+        const deduplicatedHistory = this.deduplicateHistory(history);
+        
+        // 计算统计信息
+        const stats = this.calculateStats(deduplicatedHistory);
+        
+        // 应用筛选（筛选后再次去重）
+        const filteredList = this.applyFilterWithDeduplication(deduplicatedHistory, filterStatus);
         
         this.setData({
           historyList: filteredList,
           loading: false,
-          noData: filteredList.length === 0
+          noData: filteredList.length === 0,
+          stats: stats
         });
       } catch (error) {
         console.error('筛选失败:', error);
@@ -489,7 +579,8 @@ Page({
       // 更新统计
       const newStats = { ...this.data.stats };
       newStats.total--;
-      switch (product.safetyStatus) {
+      const status = this.getSafetyStatus(product);
+      switch (status) {
         case 'SAFE': newStats.safe--; break;
         case 'RISK': newStats.risk--; break;
         case 'DANGER': newStats.danger--; break;
@@ -525,104 +616,100 @@ Page({
     }
   },
 
-  // ==================== 其他功能 ====================
-
-  // pages/history/history.js
-
-// 清空所有历史记录
-async clearAllHistory() {
-  wx.showModal({
-    title: '确认清空',
-    content: '确定要清空所有历史记录吗？此操作不可恢复',
-    confirmText: '清空',
-    confirmColor: '#e74c3c',
-    cancelText: '取消',
-    success: async (res) => {
-      if (res.confirm) {
-        await this.executeClearAllHistory();
-      }
-    }
-  });
-},
-
-// 执行清空历史记录
-async executeClearAllHistory() {
-  wx.showLoading({
-    title: '清空中...',
-    mask: true
-  });
-  
-  try {
-    // 调用后端清空接口
-    await app.clearAllHistory();
-    
-    // 清空本地缓存
-    wx.removeStorageSync('localScanHistory');
-    
-    // 更新页面状态
-    this.setData({
-      historyList: [],
-      noData: true,
-      stats: { 
-        total: 0, 
-        safe: 0, 
-        risk: 0, 
-        danger: 0 
-      }
-    });
-    
-    wx.showToast({
-      title: '已清空',
-      icon: 'success',
-      duration: 2000
-    });
-    
-    console.log('历史记录清空成功');
-    
-  } catch (error) {
-    console.error('清空历史记录失败:', error);
-    
-    this.handleClearError(error);
-    
-  } finally {
-    wx.hideLoading();
-  }
-},
-
-// 处理清空错误
-handleClearError(error) {
-  const errorMsg = error.message || error;
-  
-  if (errorMsg.includes('请先登录') || errorMsg.includes('登录已过期')) {
-    // 登录相关错误
+  // 清空所有历史记录
+  async clearAllHistory() {
     wx.showModal({
-      title: '登录提示',
-      content: errorMsg,
-      showCancel: false,
-      success: () => {
-        wx.navigateTo({
-          url: '/pages/login/login'
-        });
+      title: '确认清空',
+      content: '确定要清空所有历史记录吗？此操作不可恢复',
+      confirmText: '清空',
+      confirmColor: '#e74c3c',
+      cancelText: '取消',
+      success: async (res) => {
+        if (res.confirm) {
+          await this.executeClearAllHistory();
+        }
       }
     });
-    
-  } else if (errorMsg.includes('网络') || errorMsg.includes('超时')) {
-    // 网络错误
-    wx.showToast({
-      title: '网络连接失败',
-      icon: 'none',
-      duration: 2000
+  },
+
+  // 执行清空历史记录
+  async executeClearAllHistory() {
+    wx.showLoading({
+      title: '清空中...',
+      mask: true
     });
     
-  } else {
-    // 其他错误
-    wx.showToast({
-      title: errorMsg || '清空失败',
-      icon: 'none',
-      duration: 2000
-    });
-  }
-},
+    try {
+      // 调用后端清空接口
+      await app.clearAllHistory();
+      
+      // 清空本地缓存
+      wx.removeStorageSync('localScanHistory');
+      
+      // 更新页面状态
+      this.setData({
+        historyList: [],
+        noData: true,
+        stats: { 
+          total: 0, 
+          safe: 0, 
+          risk: 0, 
+          danger: 0 
+        }
+      });
+      
+      wx.showToast({
+        title: '已清空',
+        icon: 'success',
+        duration: 2000
+      });
+      
+      console.log('历史记录清空成功');
+      
+    } catch (error) {
+      console.error('清空历史记录失败:', error);
+      
+      this.handleClearError(error);
+      
+    } finally {
+      wx.hideLoading();
+    }
+  },
+
+  // 处理清空错误
+  handleClearError(error) {
+    const errorMsg = error.message || error;
+    
+    if (errorMsg.includes('请先登录') || errorMsg.includes('登录已过期')) {
+      // 登录相关错误
+      wx.showModal({
+        title: '登录提示',
+        content: errorMsg,
+        showCancel: false,
+        success: () => {
+          wx.navigateTo({
+            url: '/pages/login/login'
+          });
+        }
+      });
+      
+    } else if (errorMsg.includes('网络') || errorMsg.includes('超时')) {
+      // 网络错误
+      wx.showToast({
+        title: '网络连接失败',
+        icon: 'none',
+        duration: 2000
+      });
+      
+    } else {
+      // 其他错误
+      wx.showToast({
+        title: errorMsg || '清空失败',
+        icon: 'none',
+        duration: 2000
+      });
+    }
+  },
 
   // 返回首页
   goBack() {

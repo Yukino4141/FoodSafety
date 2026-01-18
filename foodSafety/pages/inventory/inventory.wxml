@@ -102,10 +102,6 @@
             <text class="iconfont icon-scan"></text>
             <text>扫码添加</text>
           </button>
-          <button class="secondary-btn" bindtap="viewExpirySuggestions">
-            <text class="iconfont icon-tips"></text>
-            <text>查看建议</text>
-          </button>
         </view>
       </view>
     </view>

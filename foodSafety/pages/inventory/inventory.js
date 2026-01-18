@@ -88,18 +88,21 @@ Page({
       
       console.log('获取库存列表成功:', inventoryList.length);
       
-      // 3. 计算统计信息
-      const stats = this.calculateStats(inventoryList);
+      // 3. 处理数据：尊重数据库中的状态，不要重新计算
+      const processedList = this.processInventoryList(inventoryList);
       
-      // 4. 更新筛选选项计数
-      const filterOptions = this.updateFilterCounts(this.data.filterOptions, inventoryList);
+      // 4. 计算统计信息
+      const stats = this.calculateStats(processedList);
       
-      // 5. 根据当前筛选状态过滤列表
-      const filteredList = this.filterInventoryList(inventoryList, this.data.filterStatus);
+      // 5. 更新筛选选项计数
+      const filterOptions = this.updateFilterCounts(this.data.filterOptions, processedList);
       
-      // 6. 更新页面数据
+      // 6. 根据当前筛选状态过滤列表
+      const filteredList = this.filterInventoryList(processedList, this.data.filterStatus);
+      
+      // 7. 更新页面数据
       this.setData({
-        inventoryList: inventoryList,
+        inventoryList: processedList,
         filteredList: filteredList,
         stats: stats,
         filterOptions: filterOptions,
@@ -142,6 +145,56 @@ Page({
         });
       }
     }
+  },
+
+  // 处理库存列表：尊重数据库状态，不重新计算
+  processInventoryList(inventoryList) {
+    return inventoryList.map(item => {
+      // 如果状态已经是已消耗（4），保持原状态
+      if (item.status === 4) {
+        return {
+          ...item,
+          // 确保其他字段也存在
+          statusText: this.getStatusText(4),
+          statusColor: this.getStatusColor(4)
+        };
+      }
+      
+      // 如果不是已消耗状态，根据过期日期计算状态
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      
+      let expiryDate = null;
+      if (item.expiryDate) {
+        expiryDate = new Date(item.expiryDate);
+        expiryDate.setHours(0, 0, 0, 0);
+      }
+      
+      let remainingDays = 0;
+      let calculatedStatus = item.status || 1; // 默认新鲜
+      
+      if (expiryDate) {
+        const diffTime = expiryDate.getTime() - today.getTime();
+        remainingDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+        
+        // 根据剩余天数计算状态
+        if (remainingDays < 0) {
+          calculatedStatus = 3; // 过期
+        } else if (remainingDays <= 3) {
+          calculatedStatus = 2; // 临期
+        } else {
+          calculatedStatus = 1; // 新鲜
+        }
+      }
+      
+      return {
+        ...item,
+        status: calculatedStatus,
+        remainingDays: remainingDays,
+        statusText: this.getStatusText(calculatedStatus),
+        statusColor: this.getStatusColor(calculatedStatus)
+      };
+    });
   },
 
   // 计算统计信息 - 修复版本
@@ -385,18 +438,6 @@ Page({
     }
   },
 
-  // 关闭编辑弹窗
-  closeEditModal() {
-    this.setData({
-      showEditModal: false,
-      editingItem: null,
-      editForm: {
-        expiryDate: '',
-        purchaseDate: ''
-      }
-    });
-  },
-
   // 删除库存商品
   confirmDelete(e) {
     const itemId = e.currentTarget.dataset.id;
@@ -424,7 +465,7 @@ Page({
       // 调用 app.js 中的删除接口（DELETE /user/inventory/{id}）
       const result = await app.deleteInventoryItem(itemId);
       
-      if (result.msg === 'success') {
+      if (result === 'success') {
         // 重新加载数据
         await this.loadInventoryData();
         
@@ -469,7 +510,7 @@ Page({
     });
   },
 
-  // 执行消耗
+  // 执行消耗 - 修复版本
   async executeConsume() {
     const itemId = this.data.consumingItem;
     
@@ -482,11 +523,39 @@ Page({
     
     try {
       // 调用 app.js 中的消耗接口（PATCH /user/inventory/{id}/consume）
-      const result = await app.request(`/user/inventory/${itemId}/consume`, 'PATCH');
+      // 添加请求体，明确指定要更新状态
+      const result = await app.request(`/user/inventory/${itemId}/consume`, 'PATCH', {
+        status: 4
+      });
       
-      if (result === 'success') {
-        // 重新加载数据
-        await this.loadInventoryData();
+      console.log('消耗接口返回:', result);
+      
+      if (result === 'success' || result.code === 1) {
+        // 立即更新本地数据状态，避免重新加载时被重新计算
+        const updatedList = this.data.inventoryList.map(item => {
+          if (item.id === itemId) {
+            return {
+              ...item,
+              status: 4, // 强制设置为已消耗
+              statusText: this.getStatusText(4),
+              statusColor: this.getStatusColor(4)
+            };
+          }
+          return item;
+        });
+        
+        // 重新计算统计信息
+        const stats = this.calculateStats(updatedList);
+        const filterOptions = this.updateFilterCounts(this.data.filterOptions, updatedList);
+        const filteredList = this.filterInventoryList(updatedList, this.data.filterStatus);
+        
+        this.setData({
+          inventoryList: updatedList,
+          filteredList: filteredList,
+          stats: stats,
+          filterOptions: filterOptions,
+          empty: filteredList.length === 0
+        });
         
         wx.showToast({
           title: '已标记为消耗',
@@ -545,7 +614,7 @@ Page({
             const results = await Promise.all(deletePromises);
             
             // 检查是否所有操作都成功
-            const allSuccess = results.every(result => result.code === 1);
+            const allSuccess = results.every(result => result.code === 1 || result === 'success');
             
             if (allSuccess) {
               // 重新加载数据
