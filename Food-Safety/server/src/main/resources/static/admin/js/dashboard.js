@@ -24,7 +24,6 @@ $(document).ready(function() {
           const d = res.data;
           $('#totalUsers').text(d.totalUsers ?? '--');
           $('#todayScans').text(d.todayScans ?? '--');
-          $('#pendingPosts').text(d.pendingPosts ?? '--');
         } else {
           alert(res.msg || '获取仪表盘数据失败');
         }
