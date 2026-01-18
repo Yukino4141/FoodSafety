@@ -1,175 +1,152 @@
-[README.md](https://github.com/user-attachments/files/24344200/README.md)
 # Food-Safety（食品安全管理平台）
 
-
-一个面向社区和家庭用户的食品安全与健康管理平台，包含商品/库存管理、社区互动、积分体系以及 AI 助力的 OCR 与健康分析功能。项目分为三个主要模块：common（通用库）、pojo（数据模型）、server（服务端）。适合学习微服务分层、MyBatis 持久化、以及结合 AI 服务的典型企业级 Java 项目结构。
-
----
+一个面向普通用户的食品安全与健康分析平台，包含后端服务（Spring Boot）、领域模型、通用库与一个基于微信小程序的前端（foodSafety）。V2.0 版本扩展了社区模块、AI 能力（OCR / 健康分析 / 配料速查）、积分切面与定时任务。
 
 ## 主要特性
 
-- 商品与库存管理：扫码、库存增减、临期监控
-- 社区模块（V2.0）：帖子、评论、内容审核、积分奖励
-- 积分体系：贴子发布、扫码等行为触发积分（切面实现）
-- AI 能力（V2.0）：OCR 识别、健康分析（对食物/成分做检测与提示）
-- 定时任务：保质期扫描、报告生成（周/月表）
-- 统一异常 / 返回结构与通用工具类支持
+- 商品、库存、用户与家庭成员管理
+- 基于 OCR 的配料识别（图片上传 -> 文字抽取）
+- AI 健康分析：根据配料和目标人群返回结构化 JSON（score、riskLevel、riskMsg 等）
+- 配料速查：单条配料风险查询 API
+- 社区（帖子/评论/审核）与积分自动化（切面）
+- 定时任务：保质期扫描、报表生成等
+- 微信小程序前端，支持分享、历史记录展示与 AI 分析交互
 
----
+## 目录概览
 
-## 项目结构（概要）
+- Food-Safety/
+  - common/      — 通用模块（常量、异常、工具类、AiProperties、敏感词工具等）
+  - pojo/        — DTO/Entity/VO（V2.0 包含社区与 AI 相关 DTO）
+  - server/      — Spring Boot 后端（controller、service、mapper、task、config）
+  - foodSafety/  — 微信小程序前端代码（JS/HTML/CSS 结构）
+  - README.md
+  - LICENSE
 
-项目采用典型的模块化多子工程结构，便于拆分与复用：
-
-Food-Safety
-├── common                                      // 通用模块（工具、常量、枚举、属性、异常、统一返回）  
-├── pojo                                        // 数据模型（DTO、Entity、VO）  
-└── server                                      // 核心服务（控制器、服务、Mapper、配置、任务）
-
-详细目录（高亮新增/版本信息）：
-
-```text
-Food-Safety
-├── common
-│   ├── src/main/java/com/itheima/common/
-│   │   ├── constant/           // 常量 (新增 CommunityConstant, PointConstant)
-│   │   ├── context/            // 上下文 (BaseContext)
-│   │   ├── enumeration/        // 枚举 (新增 TaskType, HealthTag)
-│   │   ├── exception/          // 自定义异常
-│   │   ├── properties/         // 配置属性 (新增 AiProperties)
-│   │   ├── result/             // 统一返回
-│   │   └── utils/              // 工具类 (新增 AiUtil, SensitiveWordUtil)
-│   └── pom.xml
-│
-├── pojo
-│   ├── src/main/java/com/itheima/pojo/
-│   │   ├── dto/
-│   │   │   ├── community/      // [V2.0新增] PostDTO, CommentDTO
-│   │   │   ├── user/           // ProfileDTO, FamilyMemberDTO
-│   │   │   ├── product/        // InventoryDTO
-│   │   │   └── ai/             // [V2.0新增] OcrDTO
-│   │   ├── entity/
-│   │   │   ├── CommunityPost.java
-│   │   │   ├── PostComment.java
-│   │   │   ├── UserPoints.java
-│   │   │   ├── UserProfile.java
-│   │   │   ├── FamilyMember.java
-│   │   │   ├── ProductInventory.java
-│   │   │   └── ... (User, Product 等)
-│   │   └── vo/
-│   │       ├── community/      // PostVO, CommentVO
-│   │       ├── ai/             // AiAnalysisVO
-│   │       └── ...
-│   └── pom.xml
-│
-└── server
-    ├── src/main/java/com/itheima/server/
-    │   ├── aspect/             // [V2.0新增] PointsAspect.java
-    │   ├── config/             // WebMvcConfiguration, AiConfiguration
-    │   ├── controller/
-    │   │   ├── admin/          // 管理端：AdminProductController, AdminPostController（社区审核）
-    │   │   └── app/
-    │   │       ├── ai/         // OcrController, AiAnalyzeController
-    │   │       ├── community/  // PostController, CommentController
-    │   │       ├── member/     // ProfileController, FamilyController
-    │   │       ├── product/    // ProductController, InventoryController
-    │   │       └── user/       // UserController（登录、积分）
-    │   ├── mapper/             // CommunityPostMapper, UserPointsMapper...
-    │   ├── service/            // AiService, CommunityService, PointsService...
-    │   ├── service/impl/       // AiServiceImpl（对接大模型）、CommunityServiceImpl...
-    │   └── task/               // InventoryTask（保质期扫描）、ReportTask（报表）
-    └── src/main/resources/
-        ├── mapper/
-        └── application.yml
-```
-
----
-
-## 模块说明
-
-- common：项目的基础库，放置常量、通用返回对象、全局异常、工具类（含 AI/敏感词支持）以及公共配置属性。
-- pojo：领域模型层，包含 DTO/Entity/VO。V2.0 扩展了社区与 AI 相关的数据传输对象。
-- server：后端服务实现，包含控制器、service、mapper、切面、定时任务与配置类。MyBatis 用于持久化，切面用于积分自动化。
-
----
-
-## 关键功能示例（简要）
-
-- 发帖或扫码后自动增加积分：通过 PointsAspect 切面拦截相应方法，调用 PointsService 增加积分并记录 UserPoints。
-- OCR 识别与健康分析：AiService 对接百度/阿里/自有模型，OcrController 提供图片上传并返回识别结果，AiAnalyzeController 提供基于识别结果的健康提示与标签（HealthTag）。
-- 保质期扫描任务：InventoryTask 定时扫描 ProductInventory，发现临期或过期商品触发报警/汇总报表。
-
----
+（详细目录请参考仓库中的模块结构）
 
 ## 快速开始
 
-前提条件：
-
-- JDK 11+ 或 17（根据 pom 配置）
+前提条件
+- JDK 11+（或 17，根据 pom.xml）
 - Maven 3.6+
-- 配置好数据库（MySQL）与 application.yml 中的连接信息
-- 若使用 AI 能力，请在配置文件中填写相应的大模型/服务密钥（AiProperties）
+- MySQL（或其他你配置的数据源）
+- 若使用 AI 能力：准备 AI 服务的 API Key / Endpoint（配置在 application.yml 中的 AiProperties）
 
-构建与运行（示例）：
-
-1. 克隆仓库
+后端（Server）
+1. 克隆仓库：
    git clone https://github.com/Yukino4141/FoodSafety.git
 
-2. 进入模块并编译
-   cd FoodSafety
+2. 编译构建：
+   cd Food-Safety
    mvn -T 1C clean install
 
-3. 启动 server 模块
-   cd server
+3. 运行 server 模块（示例）：
+   cd Food-Safety/server
    mvn spring-boot:run
+   或者打包后使用 java -jar target/server-*.jar
 
-4. 常见数据库初始化
-   - 在 resources/mapper 或项目根目录查找初始化脚本（如果提供）
-   - 或手动运行项目提供的 Flyway / MyBatis SQL 文件
+前端（微信小程序）
+1. 使用微信开发者工具打开 foodSafety 目录（或将其导入到你的小程序项目）
+2. 在 foodSafety 的配置（如 app.js 或 config 文件）中将 baseURL 指向后端地址（例如 http://localhost:8080）
+3. 在小程序开发者工具中编译并预览
 
-注：如果需要本地调试 AI 接口，请先将 AiProperties 的密钥及 endpoint 填入 application.yml。
+数据库与初始化
+- 请在 server/src/main/resources 下查看是否包含 SQL 初始化脚本（mapper 或 migration）
+- 如使用 Flyway 或 MyBatis 提供的 SQL，请按项目 README 或脚本手动执行初始化表结构与种子数据
 
----
+## 关键配置（示例）
 
-## 配置项（重要）
+在 server 模块的 application.yml 中需配置的数据项（示例）：
 
-- application.yml（server 模块）：
-  - 数据源（spring.datasource.*）
-  - MyBatis mapper 路径
-  - AiProperties：ai.service.key、ai.endpoint（用于 OCR/分析）
-  - 任务调度 cron（InventoryTask、ReportTask）
+- 数据源
+  spring:
+    datasource:
+      url: jdbc:mysql://localhost:3306/food_safety?useSSL=false&serverTimezone=UTC
+      username: root
+      password: your_password
 
-（具体字段请参考 code 中的 properties 类和示例配置）
+- AiProperties（在 common 或 server 的 properties 下有对应类）
+  ai:
+    service:
+      key: YOUR_AI_API_KEY
+      endpoint: https://api.your-ai-provider.com
 
----
+- 定时任务 cron（如果需要调整 InventoryTask、ReportTask）
+  tasks:
+    inventory:
+      cron: "0 0 2 * * ?"   # 每日凌晨 2 点
 
-## 贡献指南
+请参考项目中的 properties 类（AiProperties 等）以获取完整字段名与类型。
 
-欢迎贡献！建议流程：
+## 常用 API 端点（后端示例）
 
-1. Fork 本仓库
-2. 新建分支：feature/描述 或 fix/描述
-3. 提交代码并创建 Pull Request，描述改动目的与测试步骤
-4. 保持单元测试通过，若修改数据库结构请同步更新迁移脚本
+（基于当前代码：Server 中的 AiController 暴露了以下端点）
 
-代码风格：遵循项目现有风格与命名约定，方法/类注释清晰。
+- POST /user/ai/ocr
+  - 描述：上传配料表图片进行 OCR
+  - 参数：multipart file
+  - 返回：OcrResultVO（识别文本、配料提取等）
 
----
+- POST /user/ai/analyze
+  - 描述：AI 健康分析
+  - 参数：AiAnalyzeDTO（配料列表、目标人群等）
+  - 返回：AiAnalyzeVO（score、riskLevel、riskMsg 等结构化数据）
 
-## 版本与里程碑
+- POST /user/ai/ingredient-check
+  - 描述：配料速查（单个配料风险）
+  - 参数：IngredientQueryDTO { ingredient }
+  - 返回：IngredientRiskVO
 
+其他模块（示例）
+- /user/product、/user/inventory、/user/community 等（参见 server/controller 目录下的各个控制器）
+
+## 关于 AI 输出格式（重要）
+
+服务端（AiServiceImpl）强制模型返回严格 JSON，常见返回字段示例：
+- score: 整数 0-100（数值越大越安全）
+- riskLevel: 0=安全,1=中风险,2=高风险
+- riskMsg: 风险说明文本
+示例： {"score":80,"riskLevel":0,"riskMsg":"未检测到异常成分"}
+
+此约定便于后端解析并直接转为前端展示数据（ProductVO 中使用了 safetyStatus、riskMsg 等字段供前端渲染）。
+
+## 前端注意点
+
+- 小程序全局配置（foodSafety/app.js）包含 baseURL、风险关键字、状态映射等，请根据部署环境修改 baseURL 与 env。
+- 分享相关：部分页面实现了 onShareAppMessage 与 onShareTimeline（例如 ai-analyze、detail），请检查分享信息是否需要本地化或更改文案与图片。
+- 前端使用的 product VO 字段：
+  - ingredientList（List<String>）用于在页面以标签形式展示配料
+  - safetyStatus: "SAFE" / "RISK" 用于渲染颜色/图标
+
+## 开发与贡献
+
+建议流程
+1. Fork 并 clone 本仓库
+2. 新建分支：feature/xxx 或 fix/xxx
+3. 提交并创建 Pull Request，描述改动目的与测试步骤
+4. 保持单元测试通过；若修改数据库结构请同步添加迁移脚本
+
+代码规范
+- 遵循项目现有命名与风格
+- 后端接口说明清晰，Controller 层带有 Swagger 注解（可配置 swagger/openapi）
+
+## 已知/应确认的项（请开发者核对）
+- application.yml 中 AiProperties 字段名与实际代码中的属性是否完全一致
+- 小程序 baseURL（foodSafety/app.js）是否已替换为真实后端地址
+- 是否需要在 README 中附上数据库初始化脚本或样例数据（如果项目没有自动迁移）
+- 是否希望添加英文版 README 或更详细的接口文档（可以生成 swagger 文档并链接）
+
+## 版本历史（简要）
 - V1.0：基础用户、商品、库存与订单框架
 - V1.2：用户画像、家庭成员与库存管理增强
-- V2.0：社区模块（帖子/评论/审核）、AI（OCR/健康分析）、积分切面、定时任务与报表
-
----
+- V2.0：社区模块（帖子/评论/审核）、AI（OCR/健康分析/配料速查）、积分切面、定时任务与报表（当前分支 feature/v2.0-B 基于此）
 
 ## 联系与支持
 
-如需进一步协作或有问题，请通过 GitHub Issues 提问，或联系仓库维护者（Yukino4141 邮箱：2013174093yukino@gmail.com）。
+如需协作或有问题，请通过 GitHub Issues 提问，或联系仓库维护者：
+- Yukino4141
+- Email: 2013174093yukino@gmail.com
 
----
+## 许可证
 
-## License
-
-本项目采用 MIT 许可证。欲了解详情，请查看 LICENSE 文件。
+本项目采用 MIT 许可证。详见 LICENSE 文件。
